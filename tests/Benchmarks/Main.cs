@@ -34,24 +34,26 @@ namespace System.Text.RegularExpressions.RegexPerfTest
     public class IntroBenchmarkBaseline
     {
         [Benchmark(Baseline = true)]
-        //[ArgumentsSource(nameof(Data))]
-        public int Regex0()
+        [ArgumentsSource(nameof(Data))]
+        public int Regex0(string pattern, string text)
         {
             var r = new Regex0();
-            return r.re_match("a", "1111111111111111111111111111111111111111111111111111111fdssa");
+            return r.re_match(pattern, text);
         }
 
         [Benchmark]
-        //[ArgumentsSource(nameof(Data))]
-        public bool DotnetRegex()
+        [ArgumentsSource(nameof(Data))]
+        public bool DotnetRegex(string pattern, string text)
         {
-            var rr = new System.Text.RegularExpressions.Regex("a");
-            return rr.IsMatch("1111111111111111111111111111111111111111111111111111111fdssa");
+            var rr = new System.Text.RegularExpressions.Regex(pattern);
+            return rr.IsMatch(text);
         }
 
-        public IEnumerable<object> Data()
+        public IEnumerable<object[]> Data()
         {
-            yield return '\u0600';
+            yield return new object[] { "a", "a" };
+            yield return new object[] { "a", "1234567890a" };
+            yield return new object[] { "a", "12345678901234567890123456789012345678901234567890a" };
         }
     }
 }

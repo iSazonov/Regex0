@@ -23,7 +23,7 @@ namespace System.Text.RegularExpressions.RegexManual
             var r = new Regex0();
             var result = r.re_match(args[0], args[1]);
             Console.WriteLine(result);
-            //r.re_print();
+            r.re_print();
         }
     }
 }
