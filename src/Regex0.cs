@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Runtime.CompilerServices;
 
 namespace Regex
 {
@@ -77,7 +78,7 @@ namespace Regex
 
                         if (matchpattern(pattern, text.Slice(idx)))
                         {
-                            if (text[0] == '\0')
+                            if (text[0] == '\0')    // ???
                                 return -1;
 
                             return idx;
@@ -97,6 +98,7 @@ namespace Regex
         private static char[] ccl_buf = new char[MAX_CHAR_CLASS_LEN];
         int ccl_bufidx = 0;
 
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
         regex_t[] re_compile(ReadOnlySpan<char> pattern)
         {
 
@@ -123,7 +125,7 @@ namespace Regex
                     case '\\':
                         {
                             /* Skip the escape-char '\\' */
-                            i += 1;
+                            i++;
 
                             if (i < pattern.Length)
                             {
@@ -186,9 +188,10 @@ namespace Regex
                                 {
                                     if (ccl_bufidx >= MAX_CHAR_CLASS_LEN - 1)
                                     {
-                                    //fputs("exceeded internal buffer!\n", stderr);
-                                    return null;
+                                        //fputs("exceeded internal buffer!\n", stderr);
+                                        return null;
                                     }
+
                                     ccl_buf[ccl_bufidx++] = pattern[i++];
                                 }
                                 else if (ccl_bufidx >= MAX_CHAR_CLASS_LEN)
@@ -196,6 +199,7 @@ namespace Regex
                                     //fputs("exceeded internal buffer!\n", stderr);
                                     return null;
                                 }
+
                                 ccl_buf[ccl_bufidx++] = pattern[i];
                             }
 
@@ -220,8 +224,8 @@ namespace Regex
                         } break;
                 }
 
-                i += 1;
-                j += 1;
+                i++;
+                j++;
             }
 
             /* 'UNUSED' is a sentinel used to indicate end-of-pattern */
@@ -278,46 +282,58 @@ namespace Regex
 
 
         // Private functions:
-        static bool matchdigit(char c)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool matchdigit(char c)
         {
             return char.IsDigit(c);
         }
-        static bool matchalpha(char c)
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool matchalpha(char c)
         {
             return char.IsLetter(c);
         }
-        static bool matchwhitespace(char c)
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool matchwhitespace(char c)
         {
             return char.IsWhiteSpace(c);
         }
-        static bool matchalphanum(char c)
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool matchalphanum(char c)
         {
             return ((c == '_') || char.IsLetterOrDigit(c));
         }
-        static bool matchrange(char c, ReadOnlySpan<char> str)
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool matchrange(char c, ReadOnlySpan<char> str)
         {
             return (str.Length >= 3) && (str[1] == '-') && ((c >= str[0]) && (c <= str[2]));
         }
-        static bool ismetachar(char c)
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool ismetachar(char c)
         {
             return ((c == 's') || (c == 'S') || (c == 'w') || (c == 'W') || (c == 'd') || (c == 'D'));
         }
 
-    static bool matchmetachar(char c, ReadOnlySpan<char> str)
-    {
-        switch (str[0])
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool matchmetachar(char c, ReadOnlySpan<char> str)
         {
-            case 'd': return  matchdigit(c);
-            case 'D': return !matchdigit(c);
-            case 'w': return  matchalphanum(c);
-            case 'W': return !matchalphanum(c);
-            case 's': return  matchwhitespace(c);
-            case 'S': return !matchwhitespace(c);
-            default:  return (c == str[0]);
+            switch (str[0])
+            {
+                case 'd': return  matchdigit(c);
+                case 'D': return !matchdigit(c);
+                case 'w': return  matchalphanum(c);
+                case 'W': return !matchalphanum(c);
+                case 's': return  matchwhitespace(c);
+                case 'S': return !matchwhitespace(c);
+                default:  return (c == str[0]);
+            }
         }
-    }
 
-        static bool matchcharclass(char c, ReadOnlySpan<char> str)
+        private static bool matchcharclass(char c, ReadOnlySpan<char> str)
         {
             int i = 0;
 
@@ -357,7 +373,7 @@ namespace Regex
             return false;
         }
 
-        static bool matchone(regex_t p, char c)
+        private static bool matchone(regex_t p, char c)
         {
             switch (p.type)
             {
@@ -374,7 +390,8 @@ namespace Regex
             }
         }
 
-        static bool matchstar(regex_t p, ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool matchstar(regex_t p, ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text)
         {
             int i = 0;
 
@@ -390,7 +407,8 @@ namespace Regex
             return false;
         }
 
-        static bool matchplus(regex_t p, ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool matchplus(regex_t p, ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text)
         {
             int i = 0;
 
@@ -403,7 +421,8 @@ namespace Regex
             return false;
         }
 
-        static bool matchquestion(regex_t p, ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool matchquestion(regex_t p, ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text)
         {
             if (p.type == RegexElementType.UNUSED)
             {
@@ -462,7 +481,14 @@ static int matchpattern(ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text)
             int j = 0;
             do
             {
-                if ((pattern[i].type == RegexElementType.UNUSED) || (pattern[i+1].type == RegexElementType.QUESTIONMARK))
+                if (pattern[i].type == RegexElementType.CHAR)
+                {
+                    var charIndex = text.IndexOf(pattern[i].ch);
+                    if (pattern[i].ch != text[j])
+                    {
+                        return false;
+                    }
+                } else if ((pattern[i].type == RegexElementType.UNUSED) || (pattern[i+1].type == RegexElementType.QUESTIONMARK))
                 {
                     return matchquestion(pattern[i], pattern.Slice(2), text.Slice(1));
                 }
