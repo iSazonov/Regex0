@@ -13,13 +13,13 @@ using BenchmarkDotNet.Running;
 
 using Regex;
 
-namespace System.Text.RegularExpressions.Regex.PerfTest
+namespace System.Text.RegularExpressions.RegexPerfTest
 {
     public class Program
     {
         public static void Main(string[] args)
         {
-            //var summary = BenchmarkRunner.Run<IntroBenchmarkBaseline>();
+            var summary = BenchmarkRunner.Run<IntroBenchmarkBaseline>();
             //Console.WriteLine("Result: {0}", SimpleCaseFolding.SimpleCaseFold("cASEfOLDING2"));
             //Console.WriteLine("Result: {0}", SimpleCaseFolding.SimpleCaseFold("яЯяЯяЯяЯяЯя2"));
 
@@ -34,17 +34,19 @@ namespace System.Text.RegularExpressions.Regex.PerfTest
     public class IntroBenchmarkBaseline
     {
         [Benchmark(Baseline = true)]
-        [ArgumentsSource(nameof(Data))]
-        public int DotnetRegEx(char c)
+        //[ArgumentsSource(nameof(Data))]
+        public int Regex0()
         {
-            return 1;
+            var r = new Regex0();
+            return r.re_match("a", "1111111111111111111111111111111111111111111111111111111fdssa");
         }
 
         [Benchmark]
-        [ArgumentsSource(nameof(Data))]
-        public int Regex0(char c)
+        //[ArgumentsSource(nameof(Data))]
+        public bool DotnetRegex()
         {
-            return 0;
+            var rr = new System.Text.RegularExpressions.Regex("a");
+            return rr.IsMatch("1111111111111111111111111111111111111111111111111111111fdssa");
         }
 
         public IEnumerable<object> Data()

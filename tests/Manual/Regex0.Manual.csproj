@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.0</TargetFramework>
@@ -15,8 +15,10 @@
 
   <PropertyGroup>
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
+    <!--     <DebugType>pdbonly</DebugType> -->
+    <DebugType>portable</DebugType>
     <DebugSymbols>true</DebugSymbols>
+    <Optimize>false</Optimize>
   </PropertyGroup>
 
   <ItemGroup>
@@ -24,11 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- the following package(s) are from https://github.com/dotnet/fxdac -->
-    <PackageReference Include="BenchmarkDotNet" Version="0.11.*"/>
-  </ItemGroup>
-
-  <ItemGroup>
     <Compile Include="../../src/*.cs" />
   </ItemGroup>
+
 </Project>

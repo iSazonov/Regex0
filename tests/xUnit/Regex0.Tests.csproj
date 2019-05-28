@@ -11,10 +11,8 @@
 
   <PropertyGroup>
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <!--     <DebugType>pdbonly</DebugType> -->
-    <DebugType>portable</DebugType>
+    <DebugType>pdbonly</DebugType>
     <DebugSymbols>true</DebugSymbols>
-    <Optimize>false</Optimize>
   </PropertyGroup>
 
   <ItemGroup>
