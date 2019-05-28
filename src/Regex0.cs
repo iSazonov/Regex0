@@ -95,7 +95,7 @@ namespace Regex
         // MAX_CHAR_CLASS_LEN determines the size of buffer for chars in all char-classes in the expression.
         private static regex_t[] re_compiled = new regex_t[MAX_REGEXP_OBJECTS];
         private static char[] ccl_buf = new char[MAX_CHAR_CLASS_LEN];
-        int ccl_bufidx = 1;
+        int ccl_bufidx = 0;
 
         regex_t[] re_compile(ReadOnlySpan<char> pattern)
         {
@@ -180,7 +180,7 @@ namespace Regex
 
                             /* Copy characters inside [..] to buffer */
                             while (    (pattern[++i] != ']')
-                                    && (pattern[i]   != '\0')) /* Missing ] */
+                                    && (i < pattern.Length)) /* Missing ] */
                             {
                                 if (pattern[i] == '\\')
                                 {
@@ -227,42 +227,48 @@ namespace Regex
             /* 'UNUSED' is a sentinel used to indicate end-of-pattern */
             re_compiled[j].type = RegexElementType.UNUSED;
 
+            //re_print();
+
             return (regex_t[]) re_compiled;
         }
 
-        void re_print(ReadOnlySpan<regex_t> pattern)
+        public void re_print()
         {
             int i;
+            var pattern = re_compiled;
+
             for (i = 0; i < MAX_REGEXP_OBJECTS; ++i)
             {
                 if (pattern[i].type == RegexElementType.UNUSED)
                 {
-                break;
+                    //break;
+                    continue;
                 }
 
-                Console.WriteLine("type: %s", pattern[i].type);
+                Console.Write("type: {0} -> ", pattern[i].type);
                 if (pattern[i].type == RegexElementType.CHAR_CLASS || pattern[i].type == RegexElementType.INV_CHAR_CLASS)
                 {
-                    Console.WriteLine(" [");
+                    Console.Write(" [");
 
                     int j;
                     char c;
 
-                    for (j = 0; j < MAX_CHAR_CLASS_LEN; ++j)
+                    var cclSpan = pattern[i].ccl.Span;
+                    for (j = 0; j < cclSpan.Length; ++j)
                     {
-                        c = pattern[i].ccl.Span[j];
-                        if ((c == '\0') || (c == ']'))
+                        c = cclSpan[j];
+                        if (c == ']')
                         {
                             break;
                         }
-                        Console.WriteLine("%c", c);
+                        Console.Write("{0}", c);
                     }
 
                     Console.WriteLine("]");
                 }
                 else if (pattern[i].type == RegexElementType.CHAR)
                 {
-                    Console.WriteLine(" '%c'", pattern[i].ch);
+                    Console.WriteLine(" '{0}'", pattern[i].ch);
                 }
 
                 Console.WriteLine("\n");
@@ -271,33 +277,31 @@ namespace Regex
 
 
 
-    // Private functions:
-    static bool matchdigit(char c)
-    {
-    return (c - '0') <= '9';
-    }
-    static bool matchalpha(char c)
-    {
-    return ((c - 'a') <= 'z') || ((c - 'A') <= 'Z');
-    }
-static bool matchwhitespace(char c)
-{
-  return ((c == ' ') || (c == '\t') || (c == '\n') || (c == '\r') || (c == '\f') || (c == '\v'));
-}
-static bool matchalphanum(char c)
-{
-  return ((c == '_') || matchalpha(c) || matchdigit(c));
-}
-static bool matchrange(char c, ReadOnlySpan<char> str)
-{
-  return ((c != '-') && (str[0] != '\0') && (str[0] != '-') &&
-         (str[1] == '-') && (str[1] != '\0') &&
-         (str[2] != '\0') && ((c >= str[0]) && (c <= str[2])));
-}
-    static bool ismetachar(char c)
-    {
-    return ((c == 's') || (c == 'S') || (c == 'w') || (c == 'W') || (c == 'd') || (c == 'D'));
-    }
+        // Private functions:
+        static bool matchdigit(char c)
+        {
+            return char.IsDigit(c);
+        }
+        static bool matchalpha(char c)
+        {
+            return char.IsLetter(c);
+        }
+        static bool matchwhitespace(char c)
+        {
+            return char.IsWhiteSpace(c);
+        }
+        static bool matchalphanum(char c)
+        {
+            return ((c == '_') || char.IsLetterOrDigit(c));
+        }
+        static bool matchrange(char c, ReadOnlySpan<char> str)
+        {
+            return (str.Length >= 3) && (str[1] == '-') && ((c >= str[0]) && (c <= str[2]));
+        }
+        static bool ismetachar(char c)
+        {
+            return ((c == 's') || (c == 'S') || (c == 'w') || (c == 'W') || (c == 'd') || (c == 'D'));
+        }
 
     static bool matchmetachar(char c, ReadOnlySpan<char> str)
     {
@@ -348,7 +352,7 @@ static bool matchrange(char c, ReadOnlySpan<char> str)
                     }
                 }
             }
-            while (i < str.Length);
+            while (++i < str.Length);
 
             return false;
         }
@@ -437,11 +441,11 @@ static int matchpattern(ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text)
   }
   else if ((pattern[0].type == END) && pattern[1].type == UNUSED)
   {
-    return text[0] == '\0';
+    return text.IsEmpty;
   }
-  else if ((text[0] != '\0') && matchone(pattern[0], text[0]))
+  else if (!text.IsEmpty && matchone(pattern[0], text[0]))
   {
-    return matchpattern(&pattern[1], text+1);
+    return matchpattern(&pattern[1], text.Slice(1));
   }
   else
   {
@@ -472,7 +476,7 @@ static int matchpattern(ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text)
                 }
                 else if ((pattern[i].type == RegexElementType.END) && pattern[i+1].type == RegexElementType.UNUSED)
                 {
-                    return (j < text.Length);
+                    return ((j+1) == text.Length);
                 }
             /*  Branching is not working properly
                 else if (pattern[i+1].type == BRANCH)
