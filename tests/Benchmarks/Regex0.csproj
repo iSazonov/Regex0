@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <LangVersion>Latest</LangVersion>
+
+    <OutputType>Exe</OutputType>
+    <Optimize>true</Optimize>
+    <TieredCompilation>true</TieredCompilation>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+    <Description>Test</Description>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <!--     <DebugType>pdbonly</DebugType> -->
+    <DebugType>portable</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <Optimize>false</Optimize>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.5.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- the following package(s) are from https://github.com/dotnet/fxdac -->
+    <PackageReference Include="BenchmarkDotNet" Version="0.11.*"/>
+  </ItemGroup>
+</Project>
