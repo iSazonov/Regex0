@@ -66,7 +66,7 @@ namespace Regex
             {
                 if (pattern[0].type == RegexElementType.BEGIN)
                 {
-                    return ((matchpattern(pattern.Slice(1), text)) ? 0 : -1);
+                    return ((matchpattern(pattern.Slice(1), text, out int skip)) ? 0 : -1);
                 }
                 else
                 {
@@ -76,13 +76,15 @@ namespace Regex
                     {
                         idx += 1;
 
-                        if (matchpattern(pattern, text.Slice(idx)))
+                        if (matchpattern(pattern, text.Slice(idx), out int skip))
                         {
                             if (text[0] == '\0')    // ???
                                 return -1;
 
                             return idx;
                         }
+
+                        idx += skip;
                     }
                     while (idx < text.Length);
                 }
@@ -391,15 +393,15 @@ namespace Regex
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool matchstar(regex_t p, ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text)
+        private static bool matchstar(regex_t p, ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text, out int skip)
         {
             int i = 0;
 
             do
             {
-                if (matchpattern(pattern, text))
+                if (matchpattern(pattern, text, out skip))
                 {
-                return true;
+                    return true;
                 }
             }
             while (i < text.Length && matchone(p, text[i]));
@@ -408,33 +410,37 @@ namespace Regex
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool matchplus(regex_t p, ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text)
+        private static bool matchplus(regex_t p, ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text, out int skip)
         {
             int i = 0;
+            skip = 0;
 
             while (i < text.Length && matchone(p, text[i++]))
             {
-                if (matchpattern(pattern, text.Slice(i)))
-                return true;
+                if (matchpattern(pattern, text.Slice(i), out skip)) // ??? i == Length
+                {
+                    return true;
+                }
             }
 
             return false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool matchquestion(regex_t p, ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text)
+        private static bool matchquestion(regex_t p, ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text, out int skip)
         {
+            skip = 0;
             if (p.type == RegexElementType.UNUSED)
             {
                 return true;
             }
-            if (matchpattern(pattern, text))
+            if (matchpattern(pattern, text, out skip))
             {
                 return true;
             }
             if (!text.IsEmpty && matchone(p, text[0]))
             {
-                return matchpattern(pattern, text);
+                return matchpattern(pattern, text, out skip);
             }
 
             return false;
@@ -475,30 +481,41 @@ static int matchpattern(ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text)
 #else
 
         /* Iterative matching */
-        static bool matchpattern(ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text)
+        static bool matchpattern(ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text, out int skip)
         {
             int i = 0;
             int j = 0;
+            skip = 0;
             do
             {
                 if (pattern[i].type == RegexElementType.CHAR)
                 {
-                    var charIndex = text.IndexOf(pattern[i].ch);
-                    if (pattern[i].ch != text[j])
+                    if (pattern[i].ch == text[0])
                     {
-                        return false;
+                        return true;
                     }
-                } else if ((pattern[i].type == RegexElementType.UNUSED) || (pattern[i+1].type == RegexElementType.QUESTIONMARK))
+
+                    skip = text.IndexOf(pattern[i].ch) - 1;
+
+                    if (skip == -1)
+                    {
+                        skip = text.Length - 1;
+                    }
+
+                    return false;
+
+                }
+                else if ((pattern[i].type == RegexElementType.UNUSED) || (pattern[i+1].type == RegexElementType.QUESTIONMARK))
                 {
-                    return matchquestion(pattern[i], pattern.Slice(2), text.Slice(1));
+                    return matchquestion(pattern[i], pattern.Slice(2), text.Slice(1), out skip);
                 }
                 else if (pattern[i+1].type == RegexElementType.STAR)
                 {
-                    return matchstar(pattern[i], pattern.Slice(2), text.Slice(1));
+                    return matchstar(pattern[i], pattern.Slice(2), text.Slice(1), out skip);
                 }
                 else if (pattern[i+1].type == RegexElementType.PLUS)
                 {
-                    return matchplus(pattern[i], pattern.Slice(2), text.Slice(1));
+                    return matchplus(pattern[i], pattern.Slice(2), text.Slice(1), out skip);
                 }
                 else if ((pattern[i].type == RegexElementType.END) && pattern[i+1].type == RegexElementType.UNUSED)
                 {
