@@ -23,14 +23,16 @@
  *   '\W'       Non-alphanumeric
  *   '\d'       Digits, [0-9]
  *   '\D'       Non-digits
- *
+ *   '\r'       Return char
+ *   '\n'       New line char
+ *   '\t'       Tab char
  *
  */
 
 using System;
 using System.Runtime.CompilerServices;
 
-namespace Regex
+namespace System.Text.RegularExpressions.RegexLight
 {
 
     // Definitions:
@@ -45,7 +47,7 @@ namespace Regex
         internal Memory<char> ccl;  // OR  a pointer to characters in class
     }
 
-    public class Regex0
+    public class RegexLight0
     {
 
         // Max number of regex symbols in expression.
@@ -70,23 +72,25 @@ namespace Regex
                 }
                 else
                 {
-                    int idx = -1;
+                    int idx = 0;
 
                     do
                     {
-                        idx += 1;
+                        //idx += 1;
 
                         if (matchpattern(pattern, text.Slice(idx), out int skip))
                         {
-                            if (text[0] == '\0')    // ???
+                            if (text.IsEmpty)
+                            {
                                 return -1;
+                            }
 
                             return idx;
                         }
 
                         idx += skip;
                     }
-                    while (idx < text.Length);
+                    while (++idx < text.Length);
                 }
             }
 
@@ -146,7 +150,34 @@ namespace Regex
                                     default:
                                     {
                                         re_compiled[j].type = RegexElementType.CHAR;
-                                        re_compiled[j].ch = pattern[i];
+
+                                        switch (pattern[i])
+                                        {
+                                            case 'n':
+                                                {
+                                                    re_compiled[j].ch = '\n';
+                                                }
+                                                break;
+
+                                            case 'r':
+                                                {
+                                                    re_compiled[j].ch = '\r';
+                                                }
+                                                break;
+
+                                            case 't':
+                                                {
+                                                    re_compiled[j].ch = '\t';
+                                                }
+                                                break;
+
+                                            default:
+                                                {
+                                                    re_compiled[j].ch = pattern[i];
+                                                }
+
+                                                break;
+                                        }
                                     }
 
                                     break;
@@ -399,12 +430,14 @@ namespace Regex
 
             do
             {
-                if (matchpattern(pattern, text, out skip))
+                if (matchpattern(pattern, text.Slice(i), out skip))
                 {
                     return true;
                 }
+
+                i += skip;
             }
-            while (i < text.Length && matchone(p, text[i]));
+            while (i < text.Length && matchone(p, text[i++]));
 
             return false;
         }
@@ -434,7 +467,7 @@ namespace Regex
             {
                 return true;
             }
-            if (matchpattern(pattern, text, out skip))
+            if (!text.IsEmpty && matchpattern(pattern, text, out skip))
             {
                 return true;
             }
@@ -483,39 +516,28 @@ static int matchpattern(ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text)
         /* Iterative matching */
         static bool matchpattern(ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text, out int skip)
         {
+            skip = 0;
+
+            //if (text.IsEmpty)
+            //{
+            //    return false;
+            //}
+
             int i = 0;
             int j = 0;
-            skip = 0;
             do
             {
-                if (pattern[i].type == RegexElementType.CHAR)
+                if ((pattern[i].type == RegexElementType.UNUSED) || (pattern[i+1].type == RegexElementType.QUESTIONMARK))
                 {
-                    if (pattern[i].ch == text[0])
-                    {
-                        return true;
-                    }
-
-                    skip = text.IndexOf(pattern[i].ch) - 1;
-
-                    if (skip == -1)
-                    {
-                        skip = text.Length - 1;
-                    }
-
-                    return false;
-
-                }
-                else if ((pattern[i].type == RegexElementType.UNUSED) || (pattern[i+1].type == RegexElementType.QUESTIONMARK))
-                {
-                    return matchquestion(pattern[i], pattern.Slice(2), text.Slice(1), out skip);
+                    return matchquestion(pattern[i], pattern.Slice(2), text.Slice(j), out skip);
                 }
                 else if (pattern[i+1].type == RegexElementType.STAR)
                 {
-                    return matchstar(pattern[i], pattern.Slice(2), text.Slice(1), out skip);
+                    return matchstar(pattern[i], pattern.Slice(i+2), text.Slice(j), out skip);
                 }
                 else if (pattern[i+1].type == RegexElementType.PLUS)
                 {
-                    return matchplus(pattern[i], pattern.Slice(2), text.Slice(1), out skip);
+                    return matchplus(pattern[i], pattern.Slice(i+2), text.Slice(j), out skip);
                 }
                 else if ((pattern[i].type == RegexElementType.END) && pattern[i+1].type == RegexElementType.UNUSED)
                 {
@@ -525,6 +547,23 @@ static int matchpattern(ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text)
                 else if (pattern[i+1].type == BRANCH)
                 {
                 return (matchpattern(pattern, text) || matchpattern(&pattern[2], text));
+                }
+                if (pattern[i].type == RegexElementType.CHAR)
+                {
+                    if (pattern[i].ch == text[j])
+                    {
+                        return true;
+                    }
+
+                    skip = text.IndexOf(pattern[i].ch) - 1;
+
+                    if (skip < 0)
+                    {
+                        skip = text.Length - 1;
+                    }
+
+                    return false;
+
                 }
             */
             }

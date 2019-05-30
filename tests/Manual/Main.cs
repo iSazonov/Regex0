@@ -8,9 +8,9 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-using Regex;
+using System.Text.RegularExpressions.RegexLight;
 
-namespace System.Text.RegularExpressions.RegexManual
+namespace System.Text.RegularExpressions.RegexLight
 {
     public class Program
     {
@@ -19,8 +19,9 @@ namespace System.Text.RegularExpressions.RegexManual
             //var summary = BenchmarkRunner.Run<IntroBenchmarkBaseline>();
             //Console.WriteLine("Result: {0}", SimpleCaseFolding.SimpleCaseFold("cASEfOLDING2"));
             //Console.WriteLine("Result: {0}", SimpleCaseFolding.SimpleCaseFold("яЯяЯяЯяЯяЯя2"));
-
-            var r = new Regex0();
+            Console.WriteLine("args: {0}", args.Length);
+            Console.WriteLine("args: {0}:{1}", args[0], args[1]);
+            var r = new RegexLight0();
             var result = r.re_match(args[0], args[1]);
             Console.WriteLine(result);
             r.re_print();

@@ -11,9 +11,9 @@ using System.Runtime.InteropServices;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 
-using Regex;
+using System.Text.RegularExpressions.RegexLight;
 
-namespace System.Text.RegularExpressions.RegexPerfTest
+namespace System.Text.RegularExpressions.RegexLightPerfTest
 {
     public class Program
     {
@@ -23,7 +23,7 @@ namespace System.Text.RegularExpressions.RegexPerfTest
             //Console.WriteLine("Result: {0}", SimpleCaseFolding.SimpleCaseFold("cASEfOLDING2"));
             //Console.WriteLine("Result: {0}", SimpleCaseFolding.SimpleCaseFold("яЯяЯяЯяЯяЯя2"));
 
-            var r = new Regex0();
+            var r = new RegexLight0();
             var result = r.re_match("a", "fdssa");
             Console.WriteLine(result);
         }
@@ -37,7 +37,7 @@ namespace System.Text.RegularExpressions.RegexPerfTest
         [ArgumentsSource(nameof(Data))]
         public int Regex0(string pattern, string text)
         {
-            var r = new Regex0();
+            var r = new RegexLight0();
             return r.re_match(pattern, text);
         }
 

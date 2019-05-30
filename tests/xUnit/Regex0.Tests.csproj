@@ -1,12 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
-    <RuntimeFrameworkVersion>2.1.5</RuntimeFrameworkVersion>
-    <AssemblyName>powershell-xunit-tests</AssemblyName>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
     <LangVersion>Latest</LangVersion>
-    <IsPackable>false</IsPackable>
+
+    <OutputType>Exe</OutputType>
+    <Optimize>true</Optimize>
+    <TieredCompilation>true</TieredCompilation>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+    <Description>Test</Description>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
   </PropertyGroup>
 
   <PropertyGroup>
