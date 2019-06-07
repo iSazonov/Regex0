@@ -463,17 +463,17 @@ namespace System.Text.RegularExpressions.RegexLight
         private static bool matchquestion(regex_t p, ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text, out int skip)
         {
             skip = 0;
-            if (p.type == RegexElementType.UNUSED)
+            if (p.type == RegexElementType.UNUSED || pattern[0].type == RegexElementType.UNUSED)
             {
                 return true;
             }
-            if (!text.IsEmpty && matchpattern(pattern, text, out skip))
+            if (matchpattern(pattern, text, out skip))
             {
                 return true;
             }
             if (!text.IsEmpty && matchone(p, text[0]))
             {
-                return matchpattern(pattern, text, out skip);
+                return matchpattern(pattern, text.Slice(1), out skip);
             }
 
             return false;
@@ -529,7 +529,7 @@ static int matchpattern(ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text)
             {
                 if ((pattern[i].type == RegexElementType.UNUSED) || (pattern[i+1].type == RegexElementType.QUESTIONMARK))
                 {
-                    return matchquestion(pattern[i], pattern.Slice(2), text.Slice(j), out skip);
+                    return matchquestion(pattern[i], pattern.Slice(i+2), text.Slice(j), out skip);
                 }
                 else if (pattern[i+1].type == RegexElementType.STAR)
                 {
@@ -548,13 +548,10 @@ static int matchpattern(ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text)
                 {
                 return (matchpattern(pattern, text) || matchpattern(&pattern[2], text));
                 }
-                if (pattern[i].type == RegexElementType.CHAR)
+            */
+                if (j >= text.Length) return false;
+                if (pattern[i].type == RegexElementType.CHAR && pattern[i].ch != text[j])
                 {
-                    if (pattern[i].ch == text[j])
-                    {
-                        return true;
-                    }
-
                     skip = text.IndexOf(pattern[i].ch) - 1;
 
                     if (skip < 0)
@@ -563,9 +560,7 @@ static int matchpattern(ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text)
                     }
 
                     return false;
-
                 }
-            */
             }
             while ((j < text.Length) && matchone(pattern[i++], text[j++])); // ??? i < pattern.Length ???
 

@@ -51,9 +51,10 @@ namespace System.Text.RegularExpressions.RegexLightPerfTest
 
         public IEnumerable<object[]> Data()
         {
-            yield return new object[] { "a", "a" };
-            yield return new object[] { "a", "1234567890a" };
-            yield return new object[] { "a", "12345678901234567890123456789012345678901234567890a" };
+            yield return new object[] { @"a", "a" };
+            yield return new object[] { @"a", "1234567890a" };
+            yield return new object[] { @"a", "12345678901234567890123456789012345678901234567890a" };
+            yield return new object[] { @"\da\d", "12345678901234567890123456789012345678901234567890a0" };
         }
     }
 }
