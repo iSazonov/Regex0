@@ -60,7 +60,6 @@ namespace System.Text.RegularExpressions.Regex.RegexLight.Regex0Tests
         [InlineData(@"\d\d:\d\d:\d\d", "0s:00:00", -1)]
         [InlineData(@"\d\d:\d\d:\d\d", "000:00", -1)]
         [InlineData(@"\d\d:\d\d:\d\d", "00:0000", -1)]
-        [InlineData(@"\d\d:\d\d:\d\d", "0s:00:00", -1)]
         [InlineData(@"\d\d:\d\d:\d\d", "100:0:00", -1)]
         [InlineData(@"\d\d:\d\d:\d\d", "00:100:00", -1)]
         [InlineData(@"\d\d:\d\d:\d\d", "0:00:100", -1)]
