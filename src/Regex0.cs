@@ -48,7 +48,7 @@ namespace System.Text.RegularExpressions.RegexLight
         internal char  ch;
 
         // OR  a pointer to characters in class
-        internal Memory<char> ccl;
+        internal (int start, int len) ccl;
     }
 
     public class RegexLight0
@@ -113,6 +113,13 @@ namespace System.Text.RegularExpressions.RegexLight
         private regex_t[] re_compile(ReadOnlySpan<char> pattern)
         {
 
+            // If pattern length less than class char buffer
+            // we can skip the buffer index checks.
+            if (MAX_CHAR_CLASS_LEN < pattern.Length)
+            {
+                return null;
+            }
+
             char c;     /* current char in pattern   */
             int i = 0;  /* index into pattern        */
             int j = 0;  /* index into re_compiled    */
@@ -163,24 +170,20 @@ namespace System.Text.RegularExpressions.RegexLight
                                                     re_compiled[j].ch = '\n';
                                                 }
                                                 break;
-
                                             case 'r':
                                                 {
                                                     re_compiled[j].ch = '\r';
                                                 }
                                                 break;
-
                                             case 't':
                                                 {
                                                     re_compiled[j].ch = '\t';
                                                 }
                                                 break;
-
                                             default:
                                                 {
                                                     re_compiled[j].ch = pattern[i];
                                                 }
-
                                                 break;
                                         }
                                     }
@@ -201,17 +204,30 @@ namespace System.Text.RegularExpressions.RegexLight
 
                         break;
 
-                    /* Character class: */
+                    // Character class:
                     case '[':
                         {
-                            /* Remember where the char-buffer starts. */
+                            i++;
+
+                            if (i >= pattern.Length)
+                            {
+                                return null;
+                            }
+
+                            // Remember where the char-buffer starts.
                             int buf_begin = ccl_bufidx;
 
-                            /* Look-ahead to determine if negated */
-                            if (pattern[i+1] == '^')
+                            // Determine if negated.
+                            if (pattern[i] == '^')
                             {
                                 re_compiled[j].type = RegexElementType.INV_CHAR_CLASS;
-                                i += 1; /* Increment i to avoid including '^' in the char-buffer */
+
+                                i++;
+
+                                if (i >= pattern.Length)
+                                {
+                                    return null;
+                                }
                             }
                             else
                             {
@@ -219,37 +235,27 @@ namespace System.Text.RegularExpressions.RegexLight
                             }
 
                             /* Copy characters inside [..] to buffer */
-                            while (    (pattern[++i] != ']')
-                                    && (i < pattern.Length)) /* Missing ] */
+                            while (pattern[i] != ']')
                             {
                                 if (pattern[i] == '\\')
                                 {
-                                    if (ccl_bufidx >= MAX_CHAR_CLASS_LEN - 1)
+                                    ccl_buf[ccl_bufidx++] = pattern[i++];
+
+                                    if (i >= pattern.Length)
                                     {
-                                        //fputs("exceeded internal buffer!\n", stderr);
                                         return null;
                                     }
-
-                                    ccl_buf[ccl_bufidx++] = pattern[i++];
                                 }
-                                else if (ccl_bufidx >= MAX_CHAR_CLASS_LEN)
+
+                                ccl_buf[ccl_bufidx++] = pattern[i++];
+
+                                if (i >= pattern.Length)
                                 {
-                                    //fputs("exceeded internal buffer!\n", stderr);
                                     return null;
                                 }
-
-                                ccl_buf[ccl_bufidx++] = pattern[i];
                             }
 
-                            if (ccl_bufidx >= MAX_CHAR_CLASS_LEN)
-                            {
-                                /* Catches cases such as [00000000000000000000000000000000000000][ */
-                                //fputs("exceeded internal buffer!\n", stderr);
-                                return null;
-                            }
-                            /* Null-terminate string end */
-                            //ccl_buf[ccl_bufidx++] = 0;
-                            re_compiled[j].ccl = ccl_buf.AsMemory().Slice(buf_begin, ccl_bufidx - buf_begin);
+                            re_compiled[j].ccl = (start: buf_begin, len: ccl_bufidx - buf_begin);
                         }
 
                         break;
@@ -295,7 +301,7 @@ namespace System.Text.RegularExpressions.RegexLight
                     int j;
                     char c;
 
-                    var cclSpan = pattern[i].ccl.Span;
+                    var cclSpan = new ReadOnlySpan<char>(ccl_buf, pattern[i].ccl.start, pattern[i].ccl.len);
                     for (j = 0; j < cclSpan.Length; ++j)
                     {
                         c = cclSpan[j];
@@ -371,9 +377,11 @@ namespace System.Text.RegularExpressions.RegexLight
             }
         }
 
-        private static bool matchcharclass(char c, ReadOnlySpan<char> str)
+        private bool matchcharclass(char c, (int start, int len) v)
         {
             int i = 0;
+
+            ReadOnlySpan<char> str = new ReadOnlySpan<char>(ccl_buf, v.start, v.len);
 
             do
             {
@@ -411,13 +419,13 @@ namespace System.Text.RegularExpressions.RegexLight
             return false;
         }
 
-        private static bool matchone(regex_t p, char c)
+        private bool matchone(regex_t p, char c)
         {
             switch (p.type)
             {
                 case RegexElementType.DOT:            return true;
-                case RegexElementType.CHAR_CLASS:     return  matchcharclass(c, (ReadOnlySpan<char>)p.ccl.Span);
-                case RegexElementType.INV_CHAR_CLASS: return !matchcharclass(c, (ReadOnlySpan<char>)p.ccl.Span);
+                case RegexElementType.CHAR_CLASS:     return  matchcharclass(c, p.ccl);
+                case RegexElementType.INV_CHAR_CLASS: return !matchcharclass(c, p.ccl);
                 case RegexElementType.DIGIT:          return  matchdigit(c);
                 case RegexElementType.NOT_DIGIT:      return !matchdigit(c);
                 case RegexElementType.ALPHA:          return  matchalphanum(c);
@@ -429,7 +437,7 @@ namespace System.Text.RegularExpressions.RegexLight
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool matchstar(regex_t p, ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text, out int skip)
+        private bool matchstar(regex_t p, ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text, out int skip)
         {
             int i = 0;
 
@@ -448,7 +456,7 @@ namespace System.Text.RegularExpressions.RegexLight
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool matchplus(regex_t p, ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text, out int skip)
+        private bool matchplus(regex_t p, ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text, out int skip)
         {
             int i = 0;
             skip = 0;
@@ -465,7 +473,7 @@ namespace System.Text.RegularExpressions.RegexLight
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool matchquestion(regex_t p, ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text, out int skip)
+        private bool matchquestion(regex_t p, ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text, out int skip)
         {
             skip = 0;
             if (p.type == RegexElementType.UNUSED || pattern[0].type == RegexElementType.UNUSED)
@@ -519,7 +527,7 @@ static int matchpattern(ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text)
 #else
 
         /* Iterative matching */
-        static bool matchpattern(ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text, out int skip)
+        private bool matchpattern(ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text, out int skip)
         {
             skip = 0;
 
