@@ -42,9 +42,13 @@ namespace System.Text.RegularExpressions.RegexLight
 
     struct regex_t
     {
-        internal RegexElementType  type;   // CHAR, STAR, etc.
-        internal char  ch;   // the character itself
-        internal Memory<char> ccl;  // OR  a pointer to characters in class
+        internal RegexElementType type;
+
+        // the character itself
+        internal char  ch;
+
+        // OR  a pointer to characters in class
+        internal Memory<char> ccl;
     }
 
     public class RegexLight0
@@ -52,14 +56,22 @@ namespace System.Text.RegularExpressions.RegexLight
 
         // Max number of regex symbols in expression.
         private const int MAX_REGEXP_OBJECTS = 30;
+
         // Max length of character-class buffer in.
         private const int MAX_CHAR_CLASS_LEN = 40;
+
+        // Parsed regex pattern.
+        private regex_t[] re_compiled = new regex_t[MAX_REGEXP_OBJECTS];
+
+        // Buffer for chars in all char-classes in the pattern.
+        private char[] ccl_buf = new char[MAX_CHAR_CLASS_LEN];
+        int ccl_bufidx = 0;
 
 
         // Public functions:
         public int re_match(ReadOnlySpan<char> pattern, ReadOnlySpan<char> text)
         {
-        return re_matchp(re_compile(pattern), text);
+            return re_matchp(re_compile(pattern), text);
         }
 
         private int re_matchp(ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text)
@@ -96,13 +108,6 @@ namespace System.Text.RegularExpressions.RegexLight
 
             return -1;
         }
-
-        // The sizes of the two static arrays below substantiates the static RAM usage of this module.
-        // MAX_REGEXP_OBJECTS is the max number of symbols in the expression.
-        // MAX_CHAR_CLASS_LEN determines the size of buffer for chars in all char-classes in the expression.
-        private static regex_t[] re_compiled = new regex_t[MAX_REGEXP_OBJECTS];
-        private static char[] ccl_buf = new char[MAX_CHAR_CLASS_LEN];
-        int ccl_bufidx = 0;
 
         [MethodImpl(MethodImplOptions.AggressiveOptimization)]
         private regex_t[] re_compile(ReadOnlySpan<char> pattern)
