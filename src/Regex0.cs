@@ -105,7 +105,7 @@ namespace System.Text.RegularExpressions.RegexLight
         int ccl_bufidx = 0;
 
         [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-        regex_t[] re_compile(ReadOnlySpan<char> pattern)
+        private regex_t[] re_compile(ReadOnlySpan<char> pattern)
         {
 
             char c;     /* current char in pattern   */
