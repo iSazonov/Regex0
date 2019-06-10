@@ -1,33 +1,26 @@
-/*
- *
- * Mini regex-module inspired by Rob Pike's regex code described in:
- *
- * http://www.cs.princeton.edu/courses/archive/spr09/cos333/beautiful.html
- *
- *
- *
- * Supports:
- * ---------
- *   '.'        Dot, matches any character
- *   '^'        Start anchor, matches beginning of string
- *   '$'        End anchor, matches end of string
- *   '*'        Asterisk, match zero or more (greedy)
- *   '+'        Plus, match one or more (greedy)
- *   '?'        Question, match zero or one (non-greedy)
- *   '[abc]'    Character class, match if one of {'a', 'b', 'c'}
- *   '[^abc]'   Inverted class, match if NOT one of {'a', 'b', 'c'} -- NOTE: feature is currently broken!
- *   '[a-zA-Z]' Character ranges, the character set of the ranges { a-z | A-Z }
- *   '\s'       Whitespace, \t \f \r \n \v and spaces
- *   '\S'       Non-whitespace
- *   '\w'       Alphanumeric, [a-zA-Z0-9_]
- *   '\W'       Non-alphanumeric
- *   '\d'       Digits, [0-9]
- *   '\D'       Non-digits
- *   '\r'       Return char
- *   '\n'       New line char
- *   '\t'       Tab char
- *
- */
+// Mini regex-module inspired by Rob Pike's regex code described in:
+// http://www.cs.princeton.edu/courses/archive/spr09/cos333/beautiful.html
+// Supports:
+// ---------
+//   '.'        Dot, matches any character
+//   '^'        Start anchor, matches beginning of string
+//   '$'        End anchor, matches end of string
+//   '*'        Asterisk, match zero or more (greedy)
+//   '+'        Plus, match one or more (greedy)
+//   '?'        Question, match zero or one (non-greedy)
+//   '[abc]'    Character class, match if one of {'a', 'b', 'c'}
+//   '[^abc]'   Inverted class, match if NOT one of {'a', 'b', 'c'} -- NOTE: feature is currently broken!
+//   '[a-zA-Z]' Character ranges, the character set of the ranges { a-z | A-Z }
+//   '\s'       Whitespace, \t \f \r \n \v and spaces
+//   '\S'       Non-whitespace
+//   '\w'       Alphanumeric, [a-zA-Z0-9_]
+//   '\W'       Non-alphanumeric
+//   '\d'       Digits, [0-9]
+//   '\D'       Non-digits
+//   '\r'       Return char
+//   '\n'       New line char
+//   '\t'       Tab char
+//
 
 using System;
 using System.Runtime.CompilerServices;
@@ -44,10 +37,10 @@ namespace System.Text.RegularExpressions.RegexLight
     {
         internal RegexElementType type;
 
-        // the character itself
-        internal char  ch;
+        // The character itself
+        internal char ch;
 
-        // OR  a pointer to characters in class
+        // OR a pointer to characters in class
         internal (int start, int len) ccl;
     }
 
@@ -64,11 +57,9 @@ namespace System.Text.RegularExpressions.RegexLight
         private regex_t[] re_compiled = new regex_t[MAX_REGEXP_OBJECTS];
 
         // Buffer for chars in all char-classes in the pattern.
-        private char[] ccl_buf = new char[MAX_CHAR_CLASS_LEN];
-        int ccl_bufidx = 0;
+        private char[] charClassBuffer = new char[MAX_CHAR_CLASS_LEN];
+        int charClassBufferIndex = 0;
 
-
-        // Public functions:
         public int re_match(ReadOnlySpan<char> pattern, ReadOnlySpan<char> text)
         {
             return re_matchp(re_compile(pattern), text);
@@ -88,8 +79,6 @@ namespace System.Text.RegularExpressions.RegexLight
 
                     do
                     {
-                        //idx += 1;
-
                         if (matchpattern(pattern, text.Slice(idx), out int skip))
                         {
                             if (text.IsEmpty)
@@ -215,7 +204,7 @@ namespace System.Text.RegularExpressions.RegexLight
                             }
 
                             // Remember where the char-buffer starts.
-                            int buf_begin = ccl_bufidx;
+                            int buf_begin = charClassBufferIndex;
 
                             // Determine if negated.
                             if (pattern[i] == '^')
@@ -239,7 +228,7 @@ namespace System.Text.RegularExpressions.RegexLight
                             {
                                 if (pattern[i] == '\\')
                                 {
-                                    ccl_buf[ccl_bufidx++] = pattern[i++];
+                                    charClassBuffer[charClassBufferIndex++] = pattern[i++];
 
                                     if (i >= pattern.Length)
                                     {
@@ -247,7 +236,7 @@ namespace System.Text.RegularExpressions.RegexLight
                                     }
                                 }
 
-                                ccl_buf[ccl_bufidx++] = pattern[i++];
+                                charClassBuffer[charClassBufferIndex++] = pattern[i++];
 
                                 if (i >= pattern.Length)
                                 {
@@ -255,7 +244,7 @@ namespace System.Text.RegularExpressions.RegexLight
                                 }
                             }
 
-                            re_compiled[j].ccl = (start: buf_begin, len: ccl_bufidx - buf_begin);
+                            re_compiled[j].ccl = (start: buf_begin, len: charClassBufferIndex - buf_begin);
                         }
 
                         break;
@@ -301,7 +290,7 @@ namespace System.Text.RegularExpressions.RegexLight
                     int j;
                     char c;
 
-                    var cclSpan = new ReadOnlySpan<char>(ccl_buf, pattern[i].ccl.start, pattern[i].ccl.len);
+                    var cclSpan = new ReadOnlySpan<char>(charClassBuffer, pattern[i].ccl.start, pattern[i].ccl.len);
                     for (j = 0; j < cclSpan.Length; ++j)
                     {
                         c = cclSpan[j];
@@ -381,7 +370,7 @@ namespace System.Text.RegularExpressions.RegexLight
         {
             int i = 0;
 
-            ReadOnlySpan<char> str = new ReadOnlySpan<char>(ccl_buf, v.start, v.len);
+            ReadOnlySpan<char> str = new ReadOnlySpan<char>(charClassBuffer, v.start, v.len);
 
             do
             {
