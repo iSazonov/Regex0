@@ -30,6 +30,7 @@ namespace System.Text.RegularExpressions.RegexLightPerfTest
     }
 
     [DisassemblyDiagnoser(printAsm: true, printSource: true, recursiveDepth: 3)]
+    [MemoryDiagnoser]
     [RyuJitX64Job]
     public class IntroBenchmarkBaseline
     {
@@ -55,6 +56,7 @@ namespace System.Text.RegularExpressions.RegexLightPerfTest
             yield return new object[] { @"a", "1234567890a" };
             yield return new object[] { @"a", "12345678901234567890123456789012345678901234567890a" };
             yield return new object[] { @"\da\d", "12345678901234567890123456789012345678901234567890a0" };
+            yield return new object[] { @"\d[a]\d", "12345678901234567890123456789012345678901234567890a0" };
         }
     }
 }
