@@ -2,7 +2,7 @@
 // http://www.cs.princeton.edu/courses/archive/spr09/cos333/beautiful.html
 // Supports:
 // ---------
-//   '.'        Dot, matches any character
+//   '.'        Dot, matches any Unicode character
 //   '^'        Start anchor, matches beginning of string
 //   '$'        End anchor, matches end of string
 //   '*'        Asterisk, match zero or more (greedy)
@@ -11,12 +11,12 @@
 //   '[abc]'    Character class, match if one of {'a', 'b', 'c'}
 //   '[^abc]'   Inverted class, match if NOT one of {'a', 'b', 'c'} -- NOTE: feature is currently broken!
 //   '[a-zA-Z]' Character ranges, the character set of the ranges { a-z | A-Z }
-//   '\s'       Whitespace, \t \f \r \n \v and spaces
+//   '\s'       Whitespace, \t \f \r \n \v and spaces (including U+00a0 = NO-BREAK SPACE)
 //   '\S'       Non-whitespace
-//   '\w'       Alphanumeric, [a-zA-Z0-9_]
+//   '\w'       Alphanumeric, [a-zA-Z0-9_] including all Unicode digits and letters by category
 //   '\W'       Non-alphanumeric
-//   '\d'       Digits, [0-9]
-//   '\D'       Non-digits
+//   '\d'       Digits, only ASCII [0-9] (not all Unicode digits)
+//   '\D'       Non-digits, negate of \d
 //   '\r'       Return char
 //   '\n'       New line char
 //   '\t'       Tab char
