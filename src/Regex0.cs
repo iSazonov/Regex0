@@ -357,21 +357,21 @@ namespace System.Text.RegularExpressions.RegexLight
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool ismetachar(char c)
         {
-            return ((c == 's') || (c == 'd') || (c == 'w') || (c == 'W') || (c == 'S') || (c == 'D'));
+            return ((c == 's') || (c == 'd') || (c == 'w') || (c == 'S') || (c == 'D') || (c == 'W'));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool matchmetachar(char c, ReadOnlySpan<char> str)
+        private static bool matchmetachar(char c, char metaChar)
         {
-            switch (str[0])
+            switch (metaChar)
             {
                 case 'd': return  matchdigit(c);
-                case 'D': return !matchdigit(c);
-                case 'w': return  matchalphanum(c);
-                case 'W': return !matchalphanum(c);
                 case 's': return  matchwhitespace(c);
+                case 'w': return  matchalphanum(c);
+                case 'D': return !matchdigit(c);
                 case 'S': return !matchwhitespace(c);
-                default:  return (c == str[0]);
+                case 'W': return !matchalphanum(c);
+                default:  return (c == metaChar);
             }
         }
 
@@ -391,7 +391,7 @@ namespace System.Text.RegularExpressions.RegexLight
                 {
                     /* Escape-char: increment str-ptr and match on next char */
                     i++;
-                    if (matchmetachar(c, str.Slice(i)))
+                    if (matchmetachar(c, str[i]))
                     {
                         return true;
                     }
