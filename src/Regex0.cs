@@ -231,9 +231,24 @@ namespace System.Text.RegularExpressions.RegexLight
                                     {
                                         return null;
                                     }
-                                }
 
-                                charClassBuffer[charClassBufferIndex++] = pattern[i++];
+                                    charClassBuffer[charClassBufferIndex++] = pattern[i++];
+                                }
+                                else if (pattern[i] == '-')
+                                {
+                                    charClassBuffer[charClassBufferIndex++] = pattern[i++];
+
+                                    if (i >= pattern.Length)
+                                    {
+                                        return null;
+                                    }
+
+                                    charClassBuffer[charClassBufferIndex++] = (char)(pattern[i++] - pattern[i - 3]);
+                                }
+                                else
+                                {
+                                    charClassBuffer[charClassBufferIndex++] = pattern[i++];
+                                }
 
                                 if (i >= pattern.Length)
                                 {
@@ -336,7 +351,7 @@ namespace System.Text.RegularExpressions.RegexLight
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool matchrange(char c, ReadOnlySpan<char> str)
         {
-            return (str.Length >= 3) && (str[1] == '-') && ((c >= str[0]) && (c <= str[2]));
+            return (str.Length >= 3) && (str[1] == '-') && ((uint)(c - str[0]) <= str[2]);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
