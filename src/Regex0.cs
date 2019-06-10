@@ -67,7 +67,7 @@ namespace System.Text.RegularExpressions.RegexLight
 
         private int re_matchp(ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text)
         {
-            if (!pattern.IsEmpty)
+            if (!pattern.IsEmpty && !text.IsEmpty)
             {
                 if (pattern[0].type == RegexElementType.BEGIN)
                 {
