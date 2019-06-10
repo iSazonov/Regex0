@@ -357,7 +357,7 @@ namespace System.Text.RegularExpressions.RegexLight
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool ismetachar(char c)
         {
-            return ((c == 's') || (c == 'S') || (c == 'w') || (c == 'W') || (c == 'd') || (c == 'D'));
+            return ((c == 's') || (c == 'd') || (c == 'w') || (c == 'W') || (c == 'S') || (c == 'D'));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
