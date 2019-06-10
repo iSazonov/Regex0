@@ -81,11 +81,6 @@ namespace System.Text.RegularExpressions.RegexLight
                     {
                         if (matchpattern(pattern, text.Slice(idx), out int skip))
                         {
-                            if (text.IsEmpty)
-                            {
-                                return -1;
-                            }
-
                             return idx;
                         }
 
