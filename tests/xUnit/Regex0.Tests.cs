@@ -11,6 +11,8 @@ namespace System.Text.RegularExpressions.Regex.RegexLight.Regex0Tests
     public class Regex0Tests
     {
         [Theory]
+        [InlineData("", "fdssa", 0)]
+        [InlineData("a", "", -1)]
         [InlineData("a", "fdssa", 4)]
         [InlineData("d", "fdssa", 1)]
         [InlineData(@"\d", "fd1ssa", 2)]
