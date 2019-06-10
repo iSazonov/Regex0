@@ -327,7 +327,7 @@ namespace System.Text.RegularExpressions.RegexLight
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool matchdigit(char c)
         {
-            return char.IsDigit(c);
+            return (uint)(c - 0) <= (uint)(9 - 0);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
