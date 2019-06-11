@@ -44,7 +44,7 @@ namespace System.Text.RegularExpressions.RegexLight
         internal (int start, int len) ccl;
     }
 
-    public class RegexLight0
+    public partial class RegexLight0
     {
 
         // Max number of regex symbols in expression.
@@ -112,17 +112,19 @@ namespace System.Text.RegularExpressions.RegexLight
 
             while (i < pattern.Length && (compiledIndex+1 < MAX_REGEXP_OBJECTS))
             {
+                // The minor optimization reduces size of generated code for the switch.
+                ref regex_t regexType = ref re_compiled[compiledIndex];
                 currentChar = pattern[i];
 
                 switch (currentChar)
                 {
                     // Meta-characters:
-                    case '^': {    re_compiled[compiledIndex].type = RegexElementType.BEGIN;           } break;
-                    case '$': {    re_compiled[compiledIndex].type = RegexElementType.END;             } break;
-                    case '.': {    re_compiled[compiledIndex].type = RegexElementType.DOT;             } break;
-                    case '*': {    re_compiled[compiledIndex].type = RegexElementType.STAR;            } break;
-                    case '+': {    re_compiled[compiledIndex].type = RegexElementType.PLUS;            } break;
-                    case '?': {    re_compiled[compiledIndex].type = RegexElementType.QUESTIONMARK;    } break;
+                    case '^': {    regexType.type = RegexElementType.BEGIN;           } break;
+                    case '$': {    regexType.type = RegexElementType.END;             } break;
+                    case '.': {    regexType.type = RegexElementType.DOT;             } break;
+                    case '*': {    regexType.type = RegexElementType.STAR;            } break;
+                    case '+': {    regexType.type = RegexElementType.PLUS;            } break;
+                    case '?': {    regexType.type = RegexElementType.QUESTIONMARK;    } break;
                     // case '|': {    re_compiled[compiledIndex].type = RegexElementType.BRANCH;          } break; <-- not working properly
 
                     // Escaped character-classes (\s \w ...):
@@ -133,42 +135,45 @@ namespace System.Text.RegularExpressions.RegexLight
 
                             if (i < pattern.Length)
                             {
+                                // The minor optimization reduces size of generated code for the switch.
+                                ref regex_t regexType2 = ref re_compiled[compiledIndex];
+
                                 // ... and check the next
                                 switch (pattern[i])
                                 {
                                     // Meta-character:
-                                    case 'd': {    re_compiled[compiledIndex].type = RegexElementType.DIGIT;            } break;
-                                    case 'D': {    re_compiled[compiledIndex].type = RegexElementType.NOT_DIGIT;        } break;
-                                    case 'w': {    re_compiled[compiledIndex].type = RegexElementType.ALPHA;            } break;
-                                    case 'W': {    re_compiled[compiledIndex].type = RegexElementType.NOT_ALPHA;        } break;
-                                    case 's': {    re_compiled[compiledIndex].type = RegexElementType.WHITESPACE;       } break;
-                                    case 'S': {    re_compiled[compiledIndex].type = RegexElementType.NOT_WHITESPACE;   } break;
+                                    case 'd': {    regexType2.type = RegexElementType.DIGIT;            } break;
+                                    case 'D': {    regexType2.type = RegexElementType.NOT_DIGIT;        } break;
+                                    case 'w': {    regexType2.type = RegexElementType.ALPHA;            } break;
+                                    case 'W': {    regexType2.type = RegexElementType.NOT_ALPHA;        } break;
+                                    case 's': {    regexType2.type = RegexElementType.WHITESPACE;       } break;
+                                    case 'S': {    regexType2.type = RegexElementType.NOT_WHITESPACE;   } break;
 
                                     // Escaped character:
                                     default:
                                     {
-                                        re_compiled[compiledIndex].type = RegexElementType.CHAR;
+                                        regexType2.type = RegexElementType.CHAR;
 
                                         switch (pattern[i])
                                         {
                                             case 'n':
                                                 {
-                                                    re_compiled[compiledIndex].ch = '\n';
+                                                    regexType2.ch = '\n';
                                                 }
                                                 break;
                                             case 'r':
                                                 {
-                                                    re_compiled[compiledIndex].ch = '\r';
+                                                    regexType2.ch = '\r';
                                                 }
                                                 break;
                                             case 't':
                                                 {
-                                                    re_compiled[compiledIndex].ch = '\t';
+                                                    regexType2.ch = '\t';
                                                 }
                                                 break;
                                             default:
                                                 {
-                                                    re_compiled[compiledIndex].ch = pattern[i];
+                                                    regexType2.ch = pattern[i];
                                                 }
                                                 break;
                                         }
@@ -206,7 +211,7 @@ namespace System.Text.RegularExpressions.RegexLight
                             // Determine if negated.
                             if (pattern[i] == '^')
                             {
-                                re_compiled[compiledIndex].type = RegexElementType.INV_CHAR_CLASS;
+                                regexType.type = RegexElementType.INV_CHAR_CLASS;
 
                                 i++;
 
@@ -217,37 +222,32 @@ namespace System.Text.RegularExpressions.RegexLight
                             }
                             else
                             {
-                                re_compiled[compiledIndex].type = RegexElementType.CHAR_CLASS;
+                                regexType.type = RegexElementType.CHAR_CLASS;
                             }
 
                             // Copy characters inside [..] to char classbuffer.
-                            while (pattern[i] != ']')
+                            char ch;
+                            while ((ch = pattern[i]) != ']')
                             {
-                                if (pattern[i] == '\\')
+                                charClassBuffer[charClassBufferIndex++] = ch;
+                                i++;
+                                if (i >= pattern.Length)
                                 {
-                                    charClassBuffer[charClassBufferIndex++] = pattern[i++];
-
-                                    if (i >= pattern.Length)
-                                    {
-                                        return null;
-                                    }
-
-                                    charClassBuffer[charClassBufferIndex++] = pattern[i++];
+                                    return null;
                                 }
-                                else if (pattern[i] == '-')
-                                {
-                                    charClassBuffer[charClassBufferIndex++] = pattern[i++];
 
-                                    if (i >= pattern.Length)
-                                    {
-                                        return null;
-                                    }
-
-                                    charClassBuffer[charClassBufferIndex++] = (char)(pattern[i++] - pattern[i - 3]);
-                                }
-                                else
+                                switch (ch)
                                 {
-                                    charClassBuffer[charClassBufferIndex++] = pattern[i++];
+                                    case '-':
+                                        {
+                                            charClassBuffer[charClassBufferIndex++] = (char)(pattern[i++] - pattern[i - 3]);
+                                        }
+                                        break;
+                                    case '\\':
+                                        {
+                                            charClassBuffer[charClassBufferIndex++] = pattern[i++];
+                                        }
+                                        break;
                                 }
 
                                 if (i >= pattern.Length)
@@ -256,7 +256,7 @@ namespace System.Text.RegularExpressions.RegexLight
                                 }
                             }
 
-                            re_compiled[compiledIndex].ccl = (start: buf_begin, len: charClassBufferIndex - buf_begin);
+                            regexType.ccl = (start: buf_begin, len: charClassBufferIndex - buf_begin);
                         }
 
                         break;
@@ -264,8 +264,8 @@ namespace System.Text.RegularExpressions.RegexLight
                     /* Other characters: */
                     default:
                         {
-                            re_compiled[compiledIndex].type = RegexElementType.CHAR;
-                            re_compiled[compiledIndex].ch = currentChar;
+                            regexType.type = RegexElementType.CHAR;
+                            regexType.ch = currentChar;
                         } break;
                 }
 
