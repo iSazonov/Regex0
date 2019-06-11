@@ -46,7 +46,10 @@ namespace System.Text.RegularExpressions.RegexLightPerfTest
         [ArgumentsSource(nameof(Data))]
         public bool DotnetRegex(string pattern, string text)
         {
-            var rr = new System.Text.RegularExpressions.Regex(pattern);
+            //var rr = new System.Text.RegularExpressions.Regex(pattern);
+            //var rr = new System.Text.RegularExpressions.Regex(pattern, RegexOptions.IgnoreCase);
+            var rr = new System.Text.RegularExpressions.Regex(pattern, RegexOptions.CultureInvariant);
+            //var rr = new System.Text.RegularExpressions.Regex(pattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
             return rr.IsMatch(text);
         }
 
