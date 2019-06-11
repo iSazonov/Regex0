@@ -41,7 +41,7 @@ namespace System.Text.RegularExpressions.RegexLight
         internal char ch;
 
         // OR a pointer to characters in class
-        internal (int start, int len) ccl;
+        internal (int start, int len) charClass;
     }
 
     public partial class RegexLight0
@@ -256,7 +256,7 @@ namespace System.Text.RegularExpressions.RegexLight
                                 }
                             }
 
-                            regexType.ccl = (start: buf_begin, len: charClassBufferIndex - buf_begin);
+                            regexType.charClass = (start: buf_begin, len: charClassBufferIndex - buf_begin);
                         }
 
                         break;
@@ -302,7 +302,7 @@ namespace System.Text.RegularExpressions.RegexLight
                     int j;
                     char c;
 
-                    var cclSpan = new ReadOnlySpan<char>(charClassBuffer, pattern[i].ccl.start, pattern[i].ccl.len);
+                    var cclSpan = new ReadOnlySpan<char>(charClassBuffer, pattern[i].charClass.start, pattern[i].charClass.len);
                     for (j = 0; j < cclSpan.Length; ++j)
                     {
                         c = cclSpan[j];
@@ -422,8 +422,8 @@ namespace System.Text.RegularExpressions.RegexLight
             switch (p.type)
             {
                 case RegexElementType.DOT:            return true;
-                case RegexElementType.CHAR_CLASS:     return  matchcharclass(c, p.ccl);
-                case RegexElementType.INV_CHAR_CLASS: return !matchcharclass(c, p.ccl);
+                case RegexElementType.CHAR_CLASS:     return  matchcharclass(c, p.charClass);
+                case RegexElementType.INV_CHAR_CLASS: return !matchcharclass(c, p.charClass);
                 case RegexElementType.DIGIT:          return  matchdigit(c);
                 case RegexElementType.NOT_DIGIT:      return !matchdigit(c);
                 case RegexElementType.ALPHA:          return  matchalphanum(c);
