@@ -375,7 +375,7 @@ namespace System.Text.RegularExpressions.RegexLight
             }
         }
 
-        private bool matchcharclass(char c, (int start, int len) v)
+        private bool matchcharclass(char c, in (int start, int len) v)
         {
             int i = 0;
 
@@ -417,7 +417,7 @@ namespace System.Text.RegularExpressions.RegexLight
             return false;
         }
 
-        private bool matchone(regex_t p, char c)
+        private bool matchone(in regex_t p, char c)
         {
             switch (p.type)
             {
@@ -435,7 +435,7 @@ namespace System.Text.RegularExpressions.RegexLight
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool matchstar(regex_t p, ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text, out int skip)
+        private bool matchstar(in regex_t p, ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text, out int skip)
         {
             int i = 0;
 
@@ -454,7 +454,7 @@ namespace System.Text.RegularExpressions.RegexLight
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool matchplus(regex_t p, ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text, out int skip)
+        private bool matchplus(in regex_t p, ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text, out int skip)
         {
             int i = 0;
             skip = 0;
@@ -471,7 +471,7 @@ namespace System.Text.RegularExpressions.RegexLight
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool matchquestion(regex_t p, ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text, out int skip)
+        private bool matchquestion(in regex_t p, ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text, out int skip)
         {
             skip = 0;
             if (p.type == RegexElementType.UNUSED || pattern[0].type == RegexElementType.UNUSED)
