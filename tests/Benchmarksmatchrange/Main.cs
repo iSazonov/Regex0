@@ -29,36 +29,39 @@ namespace System.Text.RegularExpressions.RegexLightPerfTest
         }
     }
 
-    [DisassemblyDiagnoser(printAsm: true, printSource: true, recursiveDepth: 3)]
+    [DisassemblyDiagnoser(printAsm: true, printSource: true, recursiveDepth: 2)]
     [MemoryDiagnoser]
     [RyuJitX64Job]
     public class IntroBenchmarkBaseline
     {
         [Benchmark(Baseline = true)]
         [ArgumentsSource(nameof(Data))]
-        public bool Regex0(string pattern, string text)
+        public bool matchrangeOrig(char ch, string text)
         {
-            var r = new RegexLight0();
-            return r.re_match(pattern, text);
+            return matchrange_orig(ch, text);
         }
 
         [Benchmark]
         [ArgumentsSource(nameof(Data))]
-        public bool DotnetRegex(string pattern, string text)
+        public bool matchrangeNew(char ch, string text)
         {
-            var rr = new System.Text.RegularExpressions.Regex(pattern);
-            return rr.IsMatch(text);
+            return matchrange(ch,text);
         }
+
+        private static bool matchrange(char c, ReadOnlySpan<char> str)
+        {
+            return (str.Length >= 3) && (str[1] == '-') && ((uint)(c - str[0]) <= (uint)str[2]);
+        }
+
+        private static bool matchrange_orig(char c, ReadOnlySpan<char> str)
+        {
+            return (str.Length >= 3) && (str[1] == '-') && (c >= str[0]) && (c <= str[2]);
+        }
+
 
         public IEnumerable<object[]> Data()
         {
-//            yield return new object[] { @"a", "a" };
-//            yield return new object[] { @"a", "1234567890a" };
-//            yield return new object[] { @"a", "12345678901234567890123456789012345678901234567890a" };
-//            yield return new object[] { @"\da\d", "12345678901234567890123456789012345678901234567890a0" };
-            yield return new object[] { @"\d[a]\d", "12345678901234567890123456789012345678901234567890a0" };
-            yield return new object[] { @"\d[a-z]\d", "12345678901234567890123456789012345678901234567890a0" };
-            yield return new object[] { @"\d[a-z][0-9]", "12345678901234567890123456789012345678901234567890a0" };
+            yield return new object[] { 'b', "a-z" };
         }
     }
 }
