@@ -54,13 +54,13 @@ namespace System.Text.RegularExpressions.RegexLight
         private const int MAX_CHAR_CLASS_LEN = 40;
 
         // Parsed regex pattern.
-        private regex_t[] compiledRegexPattern = new regex_t[MAX_REGEXP_OBJECTS];
+        private regex_t[] _compiledRegexPattern = new regex_t[MAX_REGEXP_OBJECTS];
 
         // Buffer for chars in all char-classes in the pattern.
-        private char[] charClassBuffer = new char[MAX_CHAR_CLASS_LEN];
-        int charClassBufferIndex = 0;
+        private char[] _charClassBuffer = new char[MAX_CHAR_CLASS_LEN];
+        private int _charClassBufferIndex = 0;
 
-        bool caseInsensitive = true;
+        private bool _ignoreCase = true;
 
         public int Match(ReadOnlySpan<char> pattern, ReadOnlySpan<char> text)
         {
@@ -115,7 +115,7 @@ namespace System.Text.RegularExpressions.RegexLight
             while (i < pattern.Length && (compiledIndex+1 < MAX_REGEXP_OBJECTS))
             {
                 // The minor optimization reduces size of generated code for the switch.
-                ref regex_t regexType = ref compiledRegexPattern[compiledIndex];
+                ref regex_t regexType = ref _compiledRegexPattern[compiledIndex];
                 currentChar = pattern[i];
 
                 switch (currentChar)
@@ -127,7 +127,7 @@ namespace System.Text.RegularExpressions.RegexLight
                     case '*': {    regexType.type = RegexElementType.STAR;            } break;
                     case '+': {    regexType.type = RegexElementType.PLUS;            } break;
                     case '?': {    regexType.type = RegexElementType.QUESTIONMARK;    } break;
-                    // case '|': {    compiledRegexPattern[compiledIndex].type = RegexElementType.BRANCH;          } break; <-- not working properly
+                    // case '|': {    _compiledRegexPattern[compiledIndex].type = RegexElementType.BRANCH;          } break; <-- not working properly
 
                     // Escaped character-classes (\s \w ...):
                     case '\\':
@@ -138,7 +138,7 @@ namespace System.Text.RegularExpressions.RegexLight
                             if (i < pattern.Length)
                             {
                                 // The minor optimization reduces size of generated code for the switch.
-                                ref regex_t regexType2 = ref compiledRegexPattern[compiledIndex];
+                                ref regex_t regexType2 = ref _compiledRegexPattern[compiledIndex];
 
                                 // ... and check the next
                                 switch (pattern[i])
@@ -175,7 +175,7 @@ namespace System.Text.RegularExpressions.RegexLight
                                                 break;
                                             default:
                                                 {
-                                                    regexType2.ch = caseInsensitive ? char.ToLowerInvariant(pattern[i]) : pattern[i];
+                                                    regexType2.ch = _ignoreCase ? char.ToLowerInvariant(pattern[i]) : pattern[i];
                                                 }
                                                 break;
                                         }
@@ -189,8 +189,8 @@ namespace System.Text.RegularExpressions.RegexLight
                     /*
                             else
                             {
-                            compiledRegexPattern[compiledIndex].type = CHAR;
-                            compiledRegexPattern[compiledIndex].ch = pattern[i];
+                            _compiledRegexPattern[compiledIndex].type = CHAR;
+                            _compiledRegexPattern[compiledIndex].ch = pattern[i];
                             }
                     */
                         }
@@ -208,7 +208,7 @@ namespace System.Text.RegularExpressions.RegexLight
                             }
 
                             // Remember where the char-buffer starts.
-                            int buf_begin = charClassBufferIndex;
+                            int buf_begin = _charClassBufferIndex;
 
                             // Determine if negated.
                             if (pattern[i] == '^')
@@ -231,7 +231,7 @@ namespace System.Text.RegularExpressions.RegexLight
                             char ch;
                             while ((ch = pattern[i]) != ']')
                             {
-                                charClassBuffer[charClassBufferIndex++] = caseInsensitive ? char.ToLowerInvariant(ch) : ch;
+                                _charClassBuffer[_charClassBufferIndex++] = _ignoreCase ? char.ToLowerInvariant(ch) : ch;
                                 i++;
                                 if (i >= pattern.Length)
                                 {
@@ -242,15 +242,15 @@ namespace System.Text.RegularExpressions.RegexLight
                                 {
                                     case '-':
                                         {
-                                            var c2 = (caseInsensitive ? char.ToLowerInvariant(pattern[i++]) : pattern[i++]);
-                                            var c1 = charClassBuffer[charClassBufferIndex - 2];
-                                            charClassBuffer[charClassBufferIndex++] = (char)(c2 - c1);
+                                            var c2 = (_ignoreCase ? char.ToLowerInvariant(pattern[i++]) : pattern[i++]);
+                                            var c1 = _charClassBuffer[_charClassBufferIndex - 2];
+                                            _charClassBuffer[_charClassBufferIndex++] = (char)(c2 - c1);
                                         }
                                         break;
                                     case '\\':
                                         {
-                                            //charClassBuffer[charClassBufferIndex++] = caseInsensitive ? char.ToLowerInvariant(pattern[i++]) : pattern[i++];
-                                            charClassBuffer[charClassBufferIndex++] = pattern[i++];
+                                            //_charClassBuffer[_charClassBufferIndex++] = _ignoreCase ? char.ToLowerInvariant(pattern[i++]) : pattern[i++];
+                                            _charClassBuffer[_charClassBufferIndex++] = pattern[i++];
                                         }
                                         break;
                                 }
@@ -261,7 +261,7 @@ namespace System.Text.RegularExpressions.RegexLight
                                 }
                             }
 
-                            regexType.charClass = (start: buf_begin, len: charClassBufferIndex - buf_begin);
+                            regexType.charClass = (start: buf_begin, len: _charClassBufferIndex - buf_begin);
                         }
 
                         break;
@@ -270,7 +270,7 @@ namespace System.Text.RegularExpressions.RegexLight
                     default:
                         {
                             regexType.type = RegexElementType.CHAR;
-                            regexType.ch = caseInsensitive ? char.ToLowerInvariant(currentChar) : currentChar;
+                            regexType.ch = _ignoreCase ? char.ToLowerInvariant(currentChar) : currentChar;
                         } break;
                 }
 
@@ -279,17 +279,17 @@ namespace System.Text.RegularExpressions.RegexLight
             }
 
             // 'UNUSED' is a sentinel used to indicate end-of-pattern.
-            compiledRegexPattern[compiledIndex].type = RegexElementType.UNUSED;
+            _compiledRegexPattern[compiledIndex].type = RegexElementType.UNUSED;
 
             //re_print();
 
-            return (regex_t[]) compiledRegexPattern;
+            return (regex_t[]) _compiledRegexPattern;
         }
 
         public void re_print()
         {
             int i;
-            var pattern = compiledRegexPattern;
+            var pattern = _compiledRegexPattern;
 
             for (i = 0; i < MAX_REGEXP_OBJECTS; ++i)
             {
@@ -307,7 +307,7 @@ namespace System.Text.RegularExpressions.RegexLight
                     int j;
                     char c;
 
-                    var cclSpan = new ReadOnlySpan<char>(charClassBuffer, pattern[i].charClass.start, pattern[i].charClass.len);
+                    var cclSpan = new ReadOnlySpan<char>(_charClassBuffer, pattern[i].charClass.start, pattern[i].charClass.len);
                     for (j = 0; j < cclSpan.Length; ++j)
                     {
                         c = cclSpan[j];
@@ -384,7 +384,7 @@ namespace System.Text.RegularExpressions.RegexLight
         {
             int i = 0;
 
-            ReadOnlySpan<char> str = new ReadOnlySpan<char>(charClassBuffer, v.start, v.len);
+            ReadOnlySpan<char> str = new ReadOnlySpan<char>(_charClassBuffer, v.start, v.len);
 
             do
             {
@@ -427,15 +427,15 @@ namespace System.Text.RegularExpressions.RegexLight
             switch (p.type)
             {
                 case RegexElementType.DOT:            return true;
-                case RegexElementType.CHAR_CLASS:     return  MatchCharClass(caseInsensitive ? char.ToLowerInvariant(c) : c, p.charClass);
-                case RegexElementType.INV_CHAR_CLASS: return !MatchCharClass(caseInsensitive ? char.ToLowerInvariant(c) : c, p.charClass);
+                case RegexElementType.CHAR_CLASS:     return  MatchCharClass(_ignoreCase ? char.ToLowerInvariant(c) : c, p.charClass);
+                case RegexElementType.INV_CHAR_CLASS: return !MatchCharClass(_ignoreCase ? char.ToLowerInvariant(c) : c, p.charClass);
                 case RegexElementType.DIGIT:          return  MatchDigit(c);
                 case RegexElementType.NOT_DIGIT:      return !MatchDigit(c);
                 case RegexElementType.ALPHA:          return  MatchAlphaNum(c);
                 case RegexElementType.NOT_ALPHA:      return !MatchAlphaNum(c);
                 case RegexElementType.WHITESPACE:     return  MatchWhitespace(c);
                 case RegexElementType.NOT_WHITESPACE: return !MatchWhitespace(c);
-                default:                              return  (p.ch == (caseInsensitive ? char.ToLowerInvariant(c) : c));
+                default:                              return  (p.ch == (_ignoreCase ? char.ToLowerInvariant(c) : c));
             }
         }
 
