@@ -266,7 +266,7 @@ namespace System.Text.RegularExpressions.RegexLight
 
                         break;
 
-                    /* Other characters: */
+                    // Other characters
                     default:
                         {
                             regexType.type = RegexElementType.CHAR;
