@@ -572,16 +572,36 @@ static int MatchPattern(ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text)
                 }
             */
                 if (j >= text.Length) return false;
-                if (pattern[i].type == RegexElementType.CHAR && pattern[i].ch != text[j])
+
+                if (_ignoreCase)
                 {
-                    skip = text.IndexOf(pattern[i].ch) - 1;
-
-                    if (skip < 0)
+                    if (pattern[i].type == RegexElementType.CHAR && pattern[i].ch != Char.ToLowerInvariant(text[j]))
                     {
-                        skip = text.Length - 1;
-                    }
+                        //skip = text.IndexOf(pattern[i].ch, _ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal) - 1;
+                        skip = text.IndexOfAny(pattern[i].ch, Char.ToUpperInvariant(pattern[i].ch)) - 1;
 
-                    return false;
+                        if (skip < 0)
+                        {
+                            skip = text.Length - 1;
+                        }
+
+                        return false;
+                    }
+                }
+                else
+                {
+                    if (pattern[i].type == RegexElementType.CHAR && pattern[i].ch != text[j])
+                    {
+                        //skip = text.IndexOf(pattern[i].ch, _ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal) - 1;
+                        skip = text.IndexOf(pattern[i].ch) - 1;
+
+                        if (skip < 0)
+                        {
+                            skip = text.Length - 1;
+                        }
+
+                        return false;
+                    }
                 }
             }
             while ((j < text.Length) && MatchOneChar(pattern[i++], text[j++])); // ??? i < pattern.Length ???
