@@ -81,13 +81,13 @@ namespace System.Text.RegularExpressions.RegexLight
                 switch (currentChar)
                 {
                     // Meta-characters:
-                    case '^': {    re_compiled[compiledIndex].type = RegexElementType.BEGIN;           } break;
-                    case '$': {    re_compiled[compiledIndex].type = RegexElementType.END;             } break;
-                    case '.': {    re_compiled[compiledIndex].type = RegexElementType.DOT;             } break;
-                    case '*': {    re_compiled[compiledIndex].type = RegexElementType.STAR;            } break;
-                    case '+': {    re_compiled[compiledIndex].type = RegexElementType.PLUS;            } break;
-                    case '?': {    re_compiled[compiledIndex].type = RegexElementType.QUESTIONMARK;    } break;
-                    // case '|': {    re_compiled[compiledIndex].type = RegexElementType.BRANCH;          } break; <-- not working properly
+                    case '^': {    compiledRegexPattern[compiledIndex].type = RegexElementType.BEGIN;           } break;
+                    case '$': {    compiledRegexPattern[compiledIndex].type = RegexElementType.END;             } break;
+                    case '.': {    compiledRegexPattern[compiledIndex].type = RegexElementType.DOT;             } break;
+                    case '*': {    compiledRegexPattern[compiledIndex].type = RegexElementType.STAR;            } break;
+                    case '+': {    compiledRegexPattern[compiledIndex].type = RegexElementType.PLUS;            } break;
+                    case '?': {    compiledRegexPattern[compiledIndex].type = RegexElementType.QUESTIONMARK;    } break;
+                    // case '|': {    compiledRegexPattern[compiledIndex].type = RegexElementType.BRANCH;          } break; <-- not working properly
 
                     // Escaped character-classes (\s \w ...):
                     case '\\':
@@ -101,38 +101,38 @@ namespace System.Text.RegularExpressions.RegexLight
                                 switch (pattern[i])
                                 {
                                     // Meta-character:
-                                    case 'd': {    re_compiled[compiledIndex].type = RegexElementType.DIGIT;            } break;
-                                    case 'D': {    re_compiled[compiledIndex].type = RegexElementType.NOT_DIGIT;        } break;
-                                    case 'w': {    re_compiled[compiledIndex].type = RegexElementType.ALPHA;            } break;
-                                    case 'W': {    re_compiled[compiledIndex].type = RegexElementType.NOT_ALPHA;        } break;
-                                    case 's': {    re_compiled[compiledIndex].type = RegexElementType.WHITESPACE;       } break;
-                                    case 'S': {    re_compiled[compiledIndex].type = RegexElementType.NOT_WHITESPACE;   } break;
+                                    case 'd': {    compiledRegexPattern[compiledIndex].type = RegexElementType.DIGIT;            } break;
+                                    case 'D': {    compiledRegexPattern[compiledIndex].type = RegexElementType.NOT_DIGIT;        } break;
+                                    case 'w': {    compiledRegexPattern[compiledIndex].type = RegexElementType.ALPHA;            } break;
+                                    case 'W': {    compiledRegexPattern[compiledIndex].type = RegexElementType.NOT_ALPHA;        } break;
+                                    case 's': {    compiledRegexPattern[compiledIndex].type = RegexElementType.WHITESPACE;       } break;
+                                    case 'S': {    compiledRegexPattern[compiledIndex].type = RegexElementType.NOT_WHITESPACE;   } break;
 
                                     // Escaped character:
                                     default:
                                     {
-                                        re_compiled[compiledIndex].type = RegexElementType.CHAR;
+                                        compiledRegexPattern[compiledIndex].type = RegexElementType.CHAR;
 
                                         switch (pattern[i])
                                         {
                                             case 'n':
                                                 {
-                                                    re_compiled[compiledIndex].ch = '\n';
+                                                    compiledRegexPattern[compiledIndex].ch = '\n';
                                                 }
                                                 break;
                                             case 'r':
                                                 {
-                                                    re_compiled[compiledIndex].ch = '\r';
+                                                    compiledRegexPattern[compiledIndex].ch = '\r';
                                                 }
                                                 break;
                                             case 't':
                                                 {
-                                                    re_compiled[compiledIndex].ch = '\t';
+                                                    compiledRegexPattern[compiledIndex].ch = '\t';
                                                 }
                                                 break;
                                             default:
                                                 {
-                                                    re_compiled[compiledIndex].ch = pattern[i];
+                                                    compiledRegexPattern[compiledIndex].ch = pattern[i];
                                                 }
                                                 break;
                                         }
@@ -146,8 +146,8 @@ namespace System.Text.RegularExpressions.RegexLight
                     /*
                             else
                             {
-                            re_compiled[compiledIndex].type = CHAR;
-                            re_compiled[compiledIndex].ch = pattern[i];
+                            compiledRegexPattern[compiledIndex].type = CHAR;
+                            compiledRegexPattern[compiledIndex].ch = pattern[i];
                             }
                     */
                         }
@@ -170,7 +170,7 @@ namespace System.Text.RegularExpressions.RegexLight
                             // Determine if negated.
                             if (pattern[i] == '^')
                             {
-                                re_compiled[compiledIndex].type = RegexElementType.INV_CHAR_CLASS;
+                                compiledRegexPattern[compiledIndex].type = RegexElementType.INV_CHAR_CLASS;
 
                                 i++;
 
@@ -181,7 +181,7 @@ namespace System.Text.RegularExpressions.RegexLight
                             }
                             else
                             {
-                                re_compiled[compiledIndex].type = RegexElementType.CHAR_CLASS;
+                                compiledRegexPattern[compiledIndex].type = RegexElementType.CHAR_CLASS;
                             }
 
                             // Copy characters inside [..] to char classbuffer.
@@ -205,7 +205,7 @@ namespace System.Text.RegularExpressions.RegexLight
                                 }
                             }
 
-                            re_compiled[compiledIndex].ccl = (start: buf_begin, len: charClassBufferIndex - buf_begin);
+                            compiledRegexPattern[compiledIndex].charClass = (start: buf_begin, len: charClassBufferIndex - buf_begin);
                         }
 
                         break;
@@ -213,8 +213,8 @@ namespace System.Text.RegularExpressions.RegexLight
                     /* Other characters: */
                     default:
                         {
-                            re_compiled[compiledIndex].type = RegexElementType.CHAR;
-                            re_compiled[compiledIndex].ch = currentChar;
+                            compiledRegexPattern[compiledIndex].type = RegexElementType.CHAR;
+                            compiledRegexPattern[compiledIndex].ch = currentChar;
                         } break;
                 }
 
@@ -223,11 +223,11 @@ namespace System.Text.RegularExpressions.RegexLight
             }
 
             // 'UNUSED' is a sentinel used to indicate end-of-pattern.
-            re_compiled[compiledIndex].type = RegexElementType.UNUSED;
+            compiledRegexPattern[compiledIndex].type = RegexElementType.UNUSED;
 
             //re_print();
 
-            return (regex_t[]) re_compiled;
+            return (regex_t[]) compiledRegexPattern;
         }
 
 
