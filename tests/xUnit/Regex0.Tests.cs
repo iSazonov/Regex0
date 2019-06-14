@@ -91,5 +91,17 @@ namespace System.Text.RegularExpressions.Regex.RegexLight.Regex0Tests
             var result = r.Match(pattern, text);
             Assert.Equal(expected, result);
         }
+
+        [Theory]
+        [InlineData(@"qwerty", "123QWERTY", 3)]
+        [InlineData(@"[abc]", "1C2", 1)]
+        [InlineData(@"[a-h]+", "ABCDEFGH", 0)]
+        [InlineData(@"[A-H]+", "abcdefgh", 0)]
+        public static void RegexTestsIgnoreCase(string pattern, string text, int expected)
+        {
+            var r = new RegexLight0();
+            var result = r.Match(pattern, text, ignoreCase: true);
+            Assert.Equal(expected, result);
+        }
     }
 }

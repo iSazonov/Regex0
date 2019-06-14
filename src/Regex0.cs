@@ -60,10 +60,16 @@ namespace System.Text.RegularExpressions.RegexLight
         private char[] _charClassBuffer = new char[MAX_CHAR_CLASS_LEN];
         private int _charClassBufferIndex = 0;
 
-        private bool _ignoreCase = true;
+        private bool _ignoreCase = false;
 
         public int Match(ReadOnlySpan<char> pattern, ReadOnlySpan<char> text)
         {
+            return Match(CompileRegexPattern(pattern), text);
+        }
+
+        public int Match(ReadOnlySpan<char> pattern, ReadOnlySpan<char> text, bool ignoreCase)
+        {
+            _ignoreCase = ignoreCase;
             return Match(CompileRegexPattern(pattern), text);
         }
 
