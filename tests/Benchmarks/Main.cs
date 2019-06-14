@@ -44,6 +44,14 @@ namespace System.Text.RegularExpressions.RegexLightPerfTest
 
         [Benchmark]
         [ArgumentsSource(nameof(Data))]
+        public int Regex0IgnoreCase(string pattern, string text)
+        {
+            var r = new RegexLight0();
+            return r.Match(pattern, text, ignoreCase: true);
+        }
+
+        [Benchmark]
+        [ArgumentsSource(nameof(Data))]
         public bool DotnetRegex(string pattern, string text)
         {
             //var rr = new System.Text.RegularExpressions.Regex(pattern);

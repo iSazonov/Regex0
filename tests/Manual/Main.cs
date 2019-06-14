@@ -22,7 +22,7 @@ namespace System.Text.RegularExpressions.RegexLight
             Console.WriteLine("args: {0}", args.Length);
             Console.WriteLine("args: {0}:{1}", args[0], args[1]);
             var r = new RegexLight0();
-            var result = r.Match(args[0], args[1]);
+            var result = r.Match(args[0], args[1], true);
             Console.WriteLine(result);
             r.re_print();
         }
