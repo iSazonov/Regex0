@@ -73,7 +73,7 @@ namespace System.Text.RegularExpressions.RegexLight
             {
                 if (pattern[0].type == RegexElementType.BEGIN)
                 {
-                    return ((matchpattern(pattern.Slice(1), text, out int skip)) ? 0 : -1);
+                    return ((MatchPattern(pattern.Slice(1), text, out int skip)) ? 0 : -1);
                 }
                 else
                 {
@@ -81,7 +81,7 @@ namespace System.Text.RegularExpressions.RegexLight
 
                     do
                     {
-                        if (matchpattern(pattern, text.Slice(idx), out int skip))
+                        if (MatchPattern(pattern, text.Slice(idx), out int skip))
                         {
                             return idx;
                         }
@@ -330,57 +330,57 @@ namespace System.Text.RegularExpressions.RegexLight
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool matchdigit(char c)
+        private static bool MatchDigit(char c)
         {
             return (uint)(c - '0') <= (uint)('9' - '0');
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool matchalpha(char c)
+        private static bool MatchAlpha(char c)
         {
             return char.IsLetter(c);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool matchwhitespace(char c)
+        private static bool MatchWhitespace(char c)
         {
             return char.IsWhiteSpace(c);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool matchalphanum(char c)
+        private static bool MatchAlphaNum(char c)
         {
             return ((c == '_') || char.IsLetterOrDigit(c));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool matchrange(char c, ReadOnlySpan<char> str)
+        private static bool MatchRange(char c, ReadOnlySpan<char> str)
         {
             return (str.Length >= 3) && (str[1] == '-') && ((uint)(c - str[0]) <= (uint)str[2]);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool ismetachar(char c)
+        private static bool IsMetachar(char c)
         {
             return ((c == 's') || (c == 'd') || (c == 'w') || (c == 'S') || (c == 'D') || (c == 'W'));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool matchmetachar(char c, char metaChar)
+        private static bool MatchMetachar(char c, char metaChar)
         {
             switch (metaChar)
             {
-                case 'd': return  matchdigit(c);
-                case 's': return  matchwhitespace(c);
-                case 'w': return  matchalphanum(c);
-                case 'D': return !matchdigit(c);
-                case 'S': return !matchwhitespace(c);
-                case 'W': return !matchalphanum(c);
+                case 'd': return  MatchDigit(c);
+                case 's': return  MatchWhitespace(c);
+                case 'w': return  MatchAlphaNum(c);
+                case 'D': return !MatchDigit(c);
+                case 'S': return !MatchWhitespace(c);
+                case 'W': return !MatchAlphaNum(c);
                 default:  return (c == metaChar);
             }
         }
 
-        private bool matchcharclass(char c, in (int start, int len) v)
+        private bool MatchCharClass(char c, in (int start, int len) v)
         {
             int i = 0;
 
@@ -388,7 +388,7 @@ namespace System.Text.RegularExpressions.RegexLight
 
             do
             {
-                if (matchrange(c, str))
+                if (MatchRange(c, str))
                 {
                     return true;
                 }
@@ -396,11 +396,11 @@ namespace System.Text.RegularExpressions.RegexLight
                 {
                     /* Escape-char: increment str-ptr and match on next char */
                     i++;
-                    if (matchmetachar(c, str[i]))
+                    if (MatchMetachar(c, str[i]))
                     {
                         return true;
                     }
-                    else if ((c == str[i]) && !ismetachar(c))
+                    else if ((c == str[i]) && !IsMetachar(c))
                     {
                         return true;
                     }
@@ -422,51 +422,51 @@ namespace System.Text.RegularExpressions.RegexLight
             return false;
         }
 
-        private bool matchone(in regex_t p, char c)
+        private bool MatchOneChar(in regex_t p, char c)
         {
             switch (p.type)
             {
                 case RegexElementType.DOT:            return true;
-                case RegexElementType.CHAR_CLASS:     return  matchcharclass(caseInsensitive ? char.ToLowerInvariant(c) : c, p.charClass);
-                case RegexElementType.INV_CHAR_CLASS: return !matchcharclass(caseInsensitive ? char.ToLowerInvariant(c) : c, p.charClass);
-                case RegexElementType.DIGIT:          return  matchdigit(c);
-                case RegexElementType.NOT_DIGIT:      return !matchdigit(c);
-                case RegexElementType.ALPHA:          return  matchalphanum(c);
-                case RegexElementType.NOT_ALPHA:      return !matchalphanum(c);
-                case RegexElementType.WHITESPACE:     return  matchwhitespace(c);
-                case RegexElementType.NOT_WHITESPACE: return !matchwhitespace(c);
+                case RegexElementType.CHAR_CLASS:     return  MatchCharClass(caseInsensitive ? char.ToLowerInvariant(c) : c, p.charClass);
+                case RegexElementType.INV_CHAR_CLASS: return !MatchCharClass(caseInsensitive ? char.ToLowerInvariant(c) : c, p.charClass);
+                case RegexElementType.DIGIT:          return  MatchDigit(c);
+                case RegexElementType.NOT_DIGIT:      return !MatchDigit(c);
+                case RegexElementType.ALPHA:          return  MatchAlphaNum(c);
+                case RegexElementType.NOT_ALPHA:      return !MatchAlphaNum(c);
+                case RegexElementType.WHITESPACE:     return  MatchWhitespace(c);
+                case RegexElementType.NOT_WHITESPACE: return !MatchWhitespace(c);
                 default:                              return  (p.ch == (caseInsensitive ? char.ToLowerInvariant(c) : c));
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool matchstar(in regex_t p, ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text, out int skip)
+        private bool MatchStar(in regex_t p, ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text, out int skip)
         {
             int i = 0;
 
             do
             {
-                if (matchpattern(pattern, text.Slice(i), out skip))
+                if (MatchPattern(pattern, text.Slice(i), out skip))
                 {
                     return true;
                 }
 
                 i += skip;
             }
-            while (i < text.Length && matchone(p, text[i++]));
+            while (i < text.Length && MatchOneChar(p, text[i++]));
 
             return false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool matchplus(in regex_t p, ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text, out int skip)
+        private bool MatchPlus(in regex_t p, ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text, out int skip)
         {
             int i = 0;
             skip = 0;
 
-            while (i < text.Length && matchone(p, text[i++]))
+            while (i < text.Length && MatchOneChar(p, text[i++]))
             {
-                if (matchpattern(pattern, text.Slice(i), out skip)) // ??? i == Length
+                if (MatchPattern(pattern, text.Slice(i), out skip)) // ??? i == Length
                 {
                     return true;
                 }
@@ -476,20 +476,20 @@ namespace System.Text.RegularExpressions.RegexLight
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool matchquestion(in regex_t p, ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text, out int skip)
+        private bool MatchQuestion(in regex_t p, ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text, out int skip)
         {
             skip = 0;
             if (p.type == RegexElementType.UNUSED || pattern[0].type == RegexElementType.UNUSED)
             {
                 return true;
             }
-            if (matchpattern(pattern, text, out skip))
+            if (MatchPattern(pattern, text, out skip))
             {
                 return true;
             }
-            if (!text.IsEmpty && matchone(p, text[0]))
+            if (!text.IsEmpty && MatchOneChar(p, text[0]))
             {
-                return matchpattern(pattern, text.Slice(1), out skip);
+                return MatchPattern(pattern, text.Slice(1), out skip);
             }
 
             return false;
@@ -499,27 +499,27 @@ namespace System.Text.RegularExpressions.RegexLight
 #if FALSE
 
 /* Recursive matching */
-static int matchpattern(ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text)
+static int MatchPattern(ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text)
 {
   if ((pattern[0].type == UNUSED) || (pattern[1].type == QUESTIONMARK))
   {
-    return matchquestion(pattern[1], &pattern[2], text);
+    return MatchQuestion(pattern[1], &pattern[2], text);
   }
   else if (pattern[1].type == STAR)
   {
-    return matchstar(pattern[0], &pattern[2], text);
+    return MatchStar(pattern[0], &pattern[2], text);
   }
   else if (pattern[1].type == PLUS)
   {
-    return matchplus(pattern[0], &pattern[2], text);
+    return MatchPlus(pattern[0], &pattern[2], text);
   }
   else if ((pattern[0].type == END) && pattern[1].type == UNUSED)
   {
     return text.IsEmpty;
   }
-  else if (!text.IsEmpty && matchone(pattern[0], text[0]))
+  else if (!text.IsEmpty && MatchOneChar(pattern[0], text[0]))
   {
-    return matchpattern(&pattern[1], text.Slice(1));
+    return MatchPattern(&pattern[1], text.Slice(1));
   }
   else
   {
@@ -530,7 +530,7 @@ static int matchpattern(ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text)
 #else
 
         /* Iterative matching */
-        private bool matchpattern(ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text, out int skip)
+        private bool MatchPattern(ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text, out int skip)
         {
             skip = 0;
 
@@ -545,15 +545,15 @@ static int matchpattern(ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text)
             {
                 if ((pattern[i].type == RegexElementType.UNUSED) || (pattern[i+1].type == RegexElementType.QUESTIONMARK))
                 {
-                    return matchquestion(pattern[i], pattern.Slice(i+2), text.Slice(j), out skip);
+                    return MatchQuestion(pattern[i], pattern.Slice(i+2), text.Slice(j), out skip);
                 }
                 else if (pattern[i+1].type == RegexElementType.STAR)
                 {
-                    return matchstar(pattern[i], pattern.Slice(i+2), text.Slice(j), out skip);
+                    return MatchStar(pattern[i], pattern.Slice(i+2), text.Slice(j), out skip);
                 }
                 else if (pattern[i+1].type == RegexElementType.PLUS)
                 {
-                    return matchplus(pattern[i], pattern.Slice(i+2), text.Slice(j), out skip);
+                    return MatchPlus(pattern[i], pattern.Slice(i+2), text.Slice(j), out skip);
                 }
                 else if ((pattern[i].type == RegexElementType.END) && pattern[i+1].type == RegexElementType.UNUSED)
                 {
@@ -562,7 +562,7 @@ static int matchpattern(ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text)
             /*  Branching is not working properly
                 else if (pattern[i+1].type == BRANCH)
                 {
-                return (matchpattern(pattern, text) || matchpattern(&pattern[2], text));
+                return (MatchPattern(pattern, text) || MatchPattern(&pattern[2], text));
                 }
             */
                 if (j >= text.Length) return false;
@@ -578,7 +578,7 @@ static int matchpattern(ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text)
                     return false;
                 }
             }
-            while ((j < text.Length) && matchone(pattern[i++], text[j++])); // ??? i < pattern.Length ???
+            while ((j < text.Length) && MatchOneChar(pattern[i++], text[j++])); // ??? i < pattern.Length ???
 
             return false;
         }
