@@ -93,7 +93,7 @@ namespace System.Text.RegularExpressions.Regex.RegexLight.Regex0Tests
         }
 
         [Theory]
-        [InlineData(@"qwerty", "123QWERTY", 3)]
+        [InlineData(@"QWERTY", "123QWERTY", 3)]
         [InlineData(@"[abc]", "1C2", 1)]
         [InlineData(@"[a-h]+", "ABCDEFGH", 0)]
         [InlineData(@"[A-H]+", "abcdefgh", 0)]
