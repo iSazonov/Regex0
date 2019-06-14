@@ -573,34 +573,37 @@ static int MatchPattern(ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text)
             */
                 if (j >= text.Length) return false;
 
-                if (_ignoreCase)
+                if (pattern[i].type == RegexElementType.CHAR)
                 {
-                    if (pattern[i].type == RegexElementType.CHAR && pattern[i].ch != Char.ToLowerInvariant(text[j]))
+                    if (_ignoreCase)
                     {
-                        //skip = text.IndexOf(pattern[i].ch, _ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal) - 1;
-                        skip = text.IndexOfAny(pattern[i].ch, Char.ToUpperInvariant(pattern[i].ch)) - 1;
-
-                        if (skip < 0)
+                        var upperCh = Char.ToUpperInvariant(pattern[i].ch);
+                        if (pattern[i].ch != text[j] && upperCh != text[j])
                         {
-                            skip = text.Length - 1;
-                        }
+                            skip = text.IndexOfAny(pattern[i].ch, upperCh) - 1;
 
-                        return false;
+                            if (skip < 0)
+                            {
+                                skip = text.Length - 1;
+                            }
+
+                            return false;
+                        }
                     }
-                }
-                else
-                {
-                    if (pattern[i].type == RegexElementType.CHAR && pattern[i].ch != text[j])
+                    else
                     {
-                        //skip = text.IndexOf(pattern[i].ch, _ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal) - 1;
-                        skip = text.IndexOf(pattern[i].ch) - 1;
-
-                        if (skip < 0)
+                        if (pattern[i].ch != text[j])
                         {
-                            skip = text.Length - 1;
-                        }
+                            //skip = text.IndexOf(pattern[i].ch, _ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal) - 1;
+                            skip = text.IndexOf(pattern[i].ch) - 1;
 
-                        return false;
+                            if (skip < 0)
+                            {
+                                skip = text.Length - 1;
+                            }
+
+                            return false;
+                        }
                     }
                 }
             }
