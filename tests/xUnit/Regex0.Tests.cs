@@ -88,7 +88,7 @@ namespace System.Text.RegularExpressions.Regex.RegexLight.Regex0Tests
         public static void RegexTests(string pattern, string text, int expected)
         {
             var r = new RegexLight0();
-            var result = r.re_match(pattern, text);
+            var result = r.Match(pattern, text);
             Assert.Equal(expected, result);
         }
     }

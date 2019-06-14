@@ -54,7 +54,7 @@ namespace System.Text.RegularExpressions.RegexLight
         private const int MAX_CHAR_CLASS_LEN = 40;
 
         // Parsed regex pattern.
-        private regex_t[] re_compiled = new regex_t[MAX_REGEXP_OBJECTS];
+        private regex_t[] compiledRegexPattern = new regex_t[MAX_REGEXP_OBJECTS];
 
         // Buffer for chars in all char-classes in the pattern.
         private char[] charClassBuffer = new char[MAX_CHAR_CLASS_LEN];
@@ -62,12 +62,12 @@ namespace System.Text.RegularExpressions.RegexLight
 
         bool caseInsensitive = true;
 
-        public int re_match(ReadOnlySpan<char> pattern, ReadOnlySpan<char> text)
+        public int Match(ReadOnlySpan<char> pattern, ReadOnlySpan<char> text)
         {
-            return re_matchp(re_compile(pattern), text);
+            return Match(CompileRegexPattern(pattern), text);
         }
 
-        private int re_matchp(ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text)
+        private int Match(ReadOnlySpan<regex_t> pattern, ReadOnlySpan<char> text)
         {
             if (!pattern.IsEmpty && !text.IsEmpty)
             {
@@ -96,7 +96,7 @@ namespace System.Text.RegularExpressions.RegexLight
         }
 
         [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-        private regex_t[] re_compile(ReadOnlySpan<char> pattern)
+        private regex_t[] CompileRegexPattern(ReadOnlySpan<char> pattern)
         {
 
             // If pattern length less than class char buffer
@@ -115,7 +115,7 @@ namespace System.Text.RegularExpressions.RegexLight
             while (i < pattern.Length && (compiledIndex+1 < MAX_REGEXP_OBJECTS))
             {
                 // The minor optimization reduces size of generated code for the switch.
-                ref regex_t regexType = ref re_compiled[compiledIndex];
+                ref regex_t regexType = ref compiledRegexPattern[compiledIndex];
                 currentChar = pattern[i];
 
                 switch (currentChar)
@@ -127,7 +127,7 @@ namespace System.Text.RegularExpressions.RegexLight
                     case '*': {    regexType.type = RegexElementType.STAR;            } break;
                     case '+': {    regexType.type = RegexElementType.PLUS;            } break;
                     case '?': {    regexType.type = RegexElementType.QUESTIONMARK;    } break;
-                    // case '|': {    re_compiled[compiledIndex].type = RegexElementType.BRANCH;          } break; <-- not working properly
+                    // case '|': {    compiledRegexPattern[compiledIndex].type = RegexElementType.BRANCH;          } break; <-- not working properly
 
                     // Escaped character-classes (\s \w ...):
                     case '\\':
@@ -138,7 +138,7 @@ namespace System.Text.RegularExpressions.RegexLight
                             if (i < pattern.Length)
                             {
                                 // The minor optimization reduces size of generated code for the switch.
-                                ref regex_t regexType2 = ref re_compiled[compiledIndex];
+                                ref regex_t regexType2 = ref compiledRegexPattern[compiledIndex];
 
                                 // ... and check the next
                                 switch (pattern[i])
@@ -189,8 +189,8 @@ namespace System.Text.RegularExpressions.RegexLight
                     /*
                             else
                             {
-                            re_compiled[compiledIndex].type = CHAR;
-                            re_compiled[compiledIndex].ch = pattern[i];
+                            compiledRegexPattern[compiledIndex].type = CHAR;
+                            compiledRegexPattern[compiledIndex].ch = pattern[i];
                             }
                     */
                         }
@@ -279,17 +279,17 @@ namespace System.Text.RegularExpressions.RegexLight
             }
 
             // 'UNUSED' is a sentinel used to indicate end-of-pattern.
-            re_compiled[compiledIndex].type = RegexElementType.UNUSED;
+            compiledRegexPattern[compiledIndex].type = RegexElementType.UNUSED;
 
             //re_print();
 
-            return (regex_t[]) re_compiled;
+            return (regex_t[]) compiledRegexPattern;
         }
 
         public void re_print()
         {
             int i;
-            var pattern = re_compiled;
+            var pattern = compiledRegexPattern;
 
             for (i = 0; i < MAX_REGEXP_OBJECTS; ++i)
             {

@@ -24,7 +24,7 @@ namespace System.Text.RegularExpressions.RegexLightPerfTest
             //Console.WriteLine("Result: {0}", SimpleCaseFolding.SimpleCaseFold("яЯяЯяЯяЯяЯя2"));
 
             var r = new RegexLight0();
-            var result = r.re_match("a", "fdssa");
+            var result = r.Match("a", "fdssa");
             Console.WriteLine(result);
         }
     }

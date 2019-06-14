@@ -24,7 +24,7 @@ namespace System.Text.RegularExpressions.RegexLight
             //Console.WriteLine("Result: {0}", SimpleCaseFolding.SimpleCaseFold("яЯяЯяЯяЯяЯя2"));
 
             var r = new RegexLight0();
-            var result = r.re_match("a", "fdssa");
+            var result = r.Match("a", "fdssa");
             Console.WriteLine(result);
         }
     }
@@ -47,7 +47,7 @@ namespace System.Text.RegularExpressions.RegexLight
         public int Compile(string pattern)
         {
             var r = new RegexLight0();
-            return r.re_compile(pattern).Length;
+            return r.CompileRegexPattern(pattern).Length;
         }
 
         public IEnumerable<object> Data()
